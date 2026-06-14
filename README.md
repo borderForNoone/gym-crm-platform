@@ -1,50 +1,35 @@
 # Gym CRM application
-**CRM system for gym management.**
 
-![Build](https://github.com/borderForNoone/gym-crm/actions/workflows/ci.yml/badge.svg?branch=develop)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=borderForNoone_gym-crm&metric=coverage)](https://sonarcloud.io/summary/overall?id=borderForNoone_gym-crm)
-[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=borderForNoone_gym-crm&metric=alert_status)](https://sonarcloud.io/summary/overall?id=borderForNoone_gym-crm)
+![Build](https://github.com/borderForNoone/gym-crm-platform/actions/workflows/ci.yml/badge.svg?branch=develop)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=borderForNoone_gym-crm-platform&metric=coverage)](https://sonarcloud.io/summary/overall?id=borderForNoone_gym-crm-platform)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=borderForNoone_gym-crm-platform&metric=alert_status)](https://sonarcloud.io/summary/overall?id=borderForNoone_gym-crm-platform)
 
-## Prerequisites
+## 1. Prerequisites
 
-To run this application, you should have the following installed:
+Before running the application, make sure the following tools are installed:
 
-- **Java Development Kit (JDK) 21**
-- **Maven**
-- **Git**
-- **Redis**
-- **MySQL Server**
+```text
+Java 21
+Maven
+PostgreSQL
+Redis
+```
 
-## 1. Clone the project
+## 2. Clone the project
 
 ```bash
-git clone https://github.com/borderForNoone/gym-crm
-cd gym-crm
+git clone https://github.com/Pashalevchenko/gym-crm-application.git
+cd gym-crm-application
 ```
 
-## 2. Database Setup MySQL
-Run the following script to create the database and add a user:
+## 3. Database Setup PostgreSQL
+
+Before the first run, create a database and user with proper privileges:
 
 ```sql
-CREATE DATABASE gym_crm;
-CREATE USER 'gymuser'@'localhost' IDENTIFIED BY 'gympass';
-GRANT ALL PRIVILEGES ON gym_db.* TO 'gymuser'@'localhost';
-FLUSH PRIVILEGES;
-```
-
-## 3. Environment Variables
-Add following configuration for environment variables:
-
-```text
-DB_URL=jdbc:mysql://localhost:3306/gym_db
-DB_USERNAME=gymuser
-DB_PASSWORD=gympass
-```
-
-If you want to use specific environment, you can configure it by adding:
-
-```text
-SPRING_PROFILES_ACTIVE=dev
+CREATE DATABASE gym_db;
+CREATE USER gym WITH PASSWORD 'gym';
+GRANT ALL PRIVILEGES ON DATABASE gym_db TO gym;
 ```
 
 ## 4. Build the project
@@ -55,53 +40,92 @@ mvn clean compile
 
 ## 5. Run tests
 
+Docker must be running before executing tests.
+
 ```bash
 mvn test
 ```
 
-## 5. Run the application from console
+## 6. Run the application from console
 
 ```bash
 mvn spring-boot:run
 ```
 
-After startup, the application will be available at:
+If you want to run with a specific Spring profile, use:
 
-* Base API Path: http://localhost:8080/gym-crm/api/v1
-* OpenAPI / Swagger UI: http://localhost:8080/gym-crm/swagger-ui/index.html
-* OpenAPI Spec (JSON): http://localhost:8080/gym-crm/v3/api-docs
-
-## Postman Collection
-
-The project includes a Postman collection for testing the API. You can find it at the following relative path:
-
-```text
-postman/gym-crm.postman_collection.json
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-## Actuator and Metrics
+After startup, the application will be available at:
 
-Spring Boot Actuator and Micrometer are configured to expose system and custom metrics.
+```text
+http://localhost:8080/gym-crm-application
+```
 
-Base local URL: http://localhost:8080/gym-crm/actuator
 
-### Health:
+## 7.  Actuator endpoints
 
-* Database Health: http://localhost:8080/gym-crm/actuator/health/database
-* Disk Space Health: http://localhost:8080/gym-crm/actuator/health/diskSpace
-* Memory Health: http://localhost:8080/gym-crm/actuator/health/memory
-* Prometheus metrics: http://localhost:8080/gym-crm/actuator/prometheus
+The application exposes Spring Boot Actuator endpoints for health checks and Prometheus metrics.
 
-### Custom Metrics
+Base local URL:
 
-* **User Registrations**: http://localhost:8080/gym-crm/actuator/metrics/gym.auth.login.attempts
-    * Tags: `type` (trainee, trainer), `status` (success, failure)
-* **Login Attempts**: http://localhost:8080/gym-crm/actuator/metrics/gym.auth.login.attempts
-    * Tags: `status` (success, failure)
-* **Trainings Created**: http://localhost:8080/gym-crm/actuator/metrics/gym.training.creations
-    * Tags: `type` (training type name e.g. Yoga, Pilates)
-    * *Note: Returns 404 until at least one training has been created.*
-* **Active Users**: http://localhost:8080/gym-crm/actuator/metrics/gym.users.active
-    * Tags: `type` (trainee, trainer)
-* **Total Users**: http://localhost:8080/gym-crm/actuator/metrics/gym.users.total
-    * Tags: `type` (trainee, trainer)
+```text
+http://localhost:8080/gym-crm-application
+```
+
+Available actuator endpoints:
+
+```text
+GET /actuator/health
+GET /actuator/health/database
+GET /actuator/health/trainee
+GET /actuator/health/trainer
+GET /actuator/health/trainingType
+GET /actuator/health/userRepository
+GET /actuator/metrics
+GET /actuator/prometheus
+```
+
+### Examples
+
+Check application health:
+
+```bash
+http://localhost:8080/gym-crm-application/actuator/health
+```
+
+Check database health:
+
+```bash
+http://localhost:8080/gym-crm-application/actuator/health/database
+```
+
+Check trainee health:
+
+```bash
+http://localhost:8080/gym-crm-application/actuator/health/trainee
+```
+
+Check trainer health:
+
+```bash
+http://localhost:8080/gym-crm-application/actuator/health/trainer
+```
+
+Check Prometheus metrics:
+
+```bash
+http://localhost:8080/gym-crm-application/actuator/prometheus
+```
+
+Metric descriptions:
+
+```text
+gym_trainees_total     - total number of created trainees since application startup
+gym_trainers_total     - total number of created trainers since application startup
+gym_trainings_total    - total number of created trainings since application startup
+gym_trainees_active    - current number of active trainees
+gym_trainers_active    - current number of active trainers
+```
