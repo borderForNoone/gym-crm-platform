@@ -18,7 +18,7 @@ Redis
 ## 2. Clone the project
 
 ```bash
-git clone https://github.com/Pashalevchenko/gym-crm-application.git
+git clone https://github.com/borderForNoone/gym-crm-application.git
 cd gym-crm-application
 ```
 
