@@ -8,7 +8,7 @@
         <version>3.5.0</version>
     </parent>
     <version>0.0.1-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
 
     <groupId>com.gym.crm.platform</groupId>
     <artifactId>gym-crm-platform</artifactId>

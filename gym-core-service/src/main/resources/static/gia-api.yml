@@ -591,9 +591,9 @@ paths:
         '200':
           description: JWT Token
           content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/LoginResponse'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
         '401':
           description: Invalid user credentials
           content:
