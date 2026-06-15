@@ -36,7 +36,7 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: >
           mvn clean verify sonar:sonar
-          -pl gym-core-service
+          -pl gym-core-service -am
           -Dsonar.token=${{ secrets.SONAR_TOKEN }}
           -Dsonar.projectKey=borderForNoone_gym-crm-platform
           -Dsonar.organization=borderfornoone
