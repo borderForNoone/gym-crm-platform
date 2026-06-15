@@ -1,4 +1,4 @@
-package com.gym.discovery.workload.model;
+package com.gym.gateway.model;
 
 
 import lombok.AllArgsConstructor;
