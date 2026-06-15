@@ -19,6 +19,9 @@
         <module name="gym-core-service" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="gym-crm-platform" target="1.5" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
