@@ -29,20 +29,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Build and test
-        env:
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        run: mvn clean verify -pl gym-core-service -am
-
-      - name: SonarCloud analysis
+      - name: Build, test and analyze with SonarCloud
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: >
-          mvn sonar:sonar
-          -f gym-core-service/pom.xml
-          -Dsonar.token=${{ secrets.SONAR_TOKEN }}
-          -Dsonar.projectKey=borderForNoone_gym-crm-platform
-          -Dsonar.organization=borderfornoone
-          -Dsonar.coverage.jacoco.xmlReportPaths=gym-core-service/target/site/jacoco/jacoco.xml
-          -Dsonar.qualitygate.wait=true
+        run: |
+          mvn clean verify sonar:sonar -e \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            -Dsonar.qualitygate.wait=true
