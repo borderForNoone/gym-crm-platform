@@ -12,19 +12,18 @@ public class DbUnitConfig {
     @Bean
     public DatabaseConfigBean dbUnitDatabaseConfig() {
         DatabaseConfigBean config = new DatabaseConfigBean();
-        config.setCaseSensitiveTableNames(false);
         config.setQualifiedTableNames(false);
+        config.setDatatypeFactory(new org.dbunit.ext.h2.H2DataTypeFactory());
 
         return config;
     }
 
     @Bean
     public DatabaseDataSourceConnectionFactoryBean dbUnitDatabaseConnection(DataSource dataSource, DatabaseConfigBean dbUnitDatabaseConfig) {
-        var bean = new DatabaseDataSourceConnectionFactoryBean();
-        bean.setDataSource(dataSource);
-        bean.setSchema("PUBLIC");
-        bean.setDatabaseConfig(dbUnitDatabaseConfig);
+        DatabaseDataSourceConnectionFactoryBean factory = new DatabaseDataSourceConnectionFactoryBean(dataSource);
+        factory.setDatabaseConfig(dbUnitDatabaseConfig);
+        factory.setSchema("PUBLIC");
 
-        return bean;
+        return factory;
     }
 }

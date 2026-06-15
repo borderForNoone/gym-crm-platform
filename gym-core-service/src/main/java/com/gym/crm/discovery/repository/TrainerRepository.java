@@ -23,7 +23,7 @@ public interface TrainerRepository extends JpaRepository<Trainer, Long> {
     List<Trainer> findByIdNotIn(List<Long> ids);
 
     @Query("""
-            select new com.gym.crm.facade.dto.TrainerInfoDTO(
+            select new com.gym.crm.discovery.facade.dto.TrainerInfoDTO(
                 t.user.username,
                 t.user.firstName,
                 t.user.lastName,

@@ -3,6 +3,7 @@ package com.gym.crm.discovery.repository;
 import com.github.springtestdbunit.DbUnitTestExecutionListener;
 import com.github.springtestdbunit.bean.DatabaseConfigBean;
 import com.github.springtestdbunit.bean.DatabaseDataSourceConnectionFactoryBean;
+import org.dbunit.ext.h2.H2DataTypeFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Bean;
@@ -35,6 +36,7 @@ abstract class BaseTestRepository<T> {
         public DatabaseConfigBean dbUnitDatabaseConfig() {
             DatabaseConfigBean config = new DatabaseConfigBean();
             config.setQualifiedTableNames(false);
+            config.setDatatypeFactory(new H2DataTypeFactory());
 
             return config;
         }
