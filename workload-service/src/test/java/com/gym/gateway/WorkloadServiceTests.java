@@ -1,4 +1,4 @@
-package org.gym.discovery.workload;
+package com.gym.discovery.workload;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
