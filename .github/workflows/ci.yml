@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build, run tests + SonarCloud
+    name: Build and run tests + SonarCloud
     runs-on: ubuntu-latest
 
     steps:
@@ -20,20 +20,20 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: maven
 
-      - name: Build and test (all modules)
-        env:
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        run: mvn clean verify
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
-      - name: SonarCloud analysis
+      - name: Build, test and analyze with SonarCloud
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: >
-          mvn sonar:sonar
-          -Dsonar.token=${{ secrets.SONAR_TOKEN }}
-          -Dsonar.projectKey=borderForNoone_gym-crm-platform
-          -Dsonar.organization=borderfornoone
-          -Dsonar.qualitygate.wait=true
+        run: |
+          mvn clean verify sonar:sonar -e \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            -Dsonar.qualitygate.wait=true
