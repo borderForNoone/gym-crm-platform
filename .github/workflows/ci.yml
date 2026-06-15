@@ -34,10 +34,11 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        run: |
-          mvn clean verify sonar:sonar \
-            -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
-            -Dsonar.projectKey=borderForNoone_gym-crm-platform \
-            -Dsonar.organization=borderfornoone \
-            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
-            -Dsonar.qualitygate.wait=true
+        run: >
+          mvn clean verify sonar:sonar
+          -pl gym-core-service
+          -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+          -Dsonar.projectKey=borderForNoone_gym-crm-platform
+          -Dsonar.organization=borderfornoone
+          -Dsonar.coverage.jacoco.xmlReportPaths=gym-core-service/target/site/jacoco/jacoco.xml
+          -Dsonar.qualitygate.wait=true
