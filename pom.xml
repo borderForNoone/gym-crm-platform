@@ -10,6 +10,10 @@
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <modules>
+        <module>gym-core-service</module>
+    </modules>
+
     <groupId>com.gym.crm.platform</groupId>
     <artifactId>gym-crm-platform</artifactId>
 
