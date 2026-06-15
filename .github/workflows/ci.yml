@@ -40,10 +40,9 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: >
           mvn sonar:sonar
-          -pl gym-core-service
+          -f gym-core-service/pom.xml
           -Dsonar.token=${{ secrets.SONAR_TOKEN }}
           -Dsonar.projectKey=borderForNoone_gym-crm-platform
           -Dsonar.organization=borderfornoone
           -Dsonar.coverage.jacoco.xmlReportPaths=gym-core-service/target/site/jacoco/jacoco.xml
           -Dsonar.qualitygate.wait=true
-          -Dsonar.maven.scanAll=false
