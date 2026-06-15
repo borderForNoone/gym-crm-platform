@@ -12,6 +12,7 @@
 
     <modules>
         <module>gym-core-service</module>
+        <module>workload-service</module>
     </modules>
 
     <groupId>com.gym.crm.platform</groupId>
