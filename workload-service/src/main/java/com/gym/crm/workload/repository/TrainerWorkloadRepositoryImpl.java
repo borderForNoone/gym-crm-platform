@@ -1,11 +1,13 @@
 package com.gym.crm.workload.repository;
 
 import com.gym.crm.workload.model.TrainerWorkload;
+import org.springframework.stereotype.Repository;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Repository
 public class TrainerWorkloadRepositoryImpl implements TrainerWorkloadRepository {
     private final Map<String, TrainerWorkload> trainerWorkloads = new ConcurrentHashMap<>();
 
