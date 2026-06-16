@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TrainerWorkloadController.class)
-public class TrainerWorkloadControllerTest {
+class TrainerWorkloadControllerTest {
     private static final String BASE_URL = "/api/v1/trainer-workloads";
     private static final String USERNAME = "billy.herrington";
     private static final String FIRST_NAME = "Billy";
