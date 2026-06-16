@@ -1,0 +1,296 @@
+package com.gym.crm.core.service.impl;
+
+import com.gym.crm.core.exception.BadCredentialsException;
+import com.gym.crm.core.exception.EntityNotFoundException;
+import com.gym.crm.core.facade.dto.AuthResponseDTO;
+import com.gym.crm.core.facade.dto.PasswordChangeRequest;
+import com.gym.crm.core.facade.dto.ToggleActiveRequestDTO;
+import com.gym.crm.core.model.Trainee;
+import com.gym.crm.core.model.Trainer;
+import com.gym.crm.core.model.User;
+import com.gym.crm.core.repository.TraineeRepository;
+import com.gym.crm.core.repository.TrainerRepository;
+import com.gym.crm.core.security.BruteForceProtectionService;
+import com.gym.crm.core.security.JwtService;
+import com.gym.crm.core.security.TokenBlacklistService;
+import com.gym.crm.core.service.common.CoreValidator;
+import com.gym.crm.core.service.common.UserInputValidator;
+import org.gym.crm.rest.LoginRequest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class UserProfileServiceImplTest {
+    @Mock
+    private TraineeRepository traineeRepository;
+    @Mock
+    private TrainerRepository trainerRepository;
+    @Mock
+    private CoreValidator validator;
+    @Mock
+    private UserInputValidator userInputValidator;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Mock
+    private JwtService jwtService;
+    @Mock
+    private BruteForceProtectionService bruteForceProtectionService;
+    @Mock
+    private TokenBlacklistService tokenBlacklistService;
+
+    @InjectMocks
+    private UserProfileServiceImpl service;
+
+    @Test
+    void authenticate_shouldReturnAuthResponse_whenCredentialsValid() {
+        User user = User.builder().username("user").password("hash").isActive(true).build();
+        Trainee trainee = Trainee.builder().user(user).build();
+
+        when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));
+        when(passwordEncoder.matches("pass", "hash")).thenReturn(true);
+        when(jwtService.generateToken("user")).thenReturn("jwt-token");
+
+        AuthResponseDTO result = service.authenticate("user", "pass");
+
+        assertThat(result.getUsername()).isEqualTo("user");
+        assertThat(result.getToken()).isEqualTo("jwt-token");
+        verify(jwtService).generateToken("user");
+    }
+
+    @Test
+    void authenticate_shouldThrow_whenUserNotFound() {
+        when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.empty());
+        when(trainerRepository.findByUser_Username("user")).thenReturn(Optional.empty());
+
+        Throwable actual = catchThrowable(() -> service.authenticate("user", "pass"));
+
+        assertThat(actual).isInstanceOf(EntityNotFoundException.class).hasMessageContaining("User not found");
+    }
+
+    @Test
+    void authenticate_shouldThrow_whenPasswordInvalid() {
+        User user = User.builder().username("user").password("hash").isActive(true).build();
+        Trainee trainee = Trainee.builder().user(user).build();
+
+        when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));
+        when(passwordEncoder.matches("wrong", "hash")).thenReturn(false);
+
+        Throwable actual = catchThrowable(() -> service.authenticate("user", "wrong"));
+
+        assertThat(actual).isInstanceOf(BadCredentialsException.class).hasMessageContaining("Invalid credentials");
+    }
+
+    @Test
+    void logout_shouldBlacklistTokenAndClearContext_whenHeaderIsValid() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer token");
+
+        when(jwtService.extractUsername("token")).thenReturn("user");
+
+        service.logout(request);
+
+        verify(jwtService).extractUsername("token");
+        verify(tokenBlacklistService).blacklist("token");
+    }
+
+    @Test
+    void authenticate_shouldFindTrainer_whenTraineeNotFound() {
+        User user = User.builder().username("trainer1").password("hash").isActive(true).build();
+        Trainer trainer = Trainer.builder().user(user).build();
+
+        when(traineeRepository.findByUser_Username("trainer1")).thenReturn(Optional.empty());
+        when(trainerRepository.findByUser_Username("trainer1")).thenReturn(Optional.of(trainer));
+        when(passwordEncoder.matches("pass", "hash")).thenReturn(true);
+        when(jwtService.generateToken("trainer1")).thenReturn("jwt-token");
+
+        AuthResponseDTO actual = service.authenticate("trainer1", "pass");
+
+        assertThat(actual.getUsername()).isEqualTo("trainer1");
+        assertThat(actual.getToken()).isEqualTo("jwt-token");
+    }
+
+    @Test
+    void login_shouldReturnUser() {
+        LoginRequest request = mock(LoginRequest.class);
+        User user = User.builder().username("user").password("hash").isActive(true).build();
+        Trainee trainee = Trainee.builder().user(user).build();
+
+        when(request.getUsername()).thenReturn("user");
+        when(request.getPassword()).thenReturn("pass");
+        when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));
+        when(passwordEncoder.matches("pass", "hash")).thenReturn(true);
+
+        User result = service.login(request);
+
+        assertThat(result).isNotNull();
+    }
+
+    @Test
+    void login_shouldThrow_whenPasswordInvalid() {
+        LoginRequest request = mock(LoginRequest.class);
+
+        User user = User.builder().username("user").password("hash").isActive(true).build();
+        Trainee trainee = Trainee.builder().user(user).build();
+
+        when(request.getUsername()).thenReturn("user");
+        when(request.getPassword()).thenReturn("bad");
+        when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));
+        when(passwordEncoder.matches("bad", "hash")).thenReturn(false);
+
+        assertThatThrownBy(() -> service.login(request)).isInstanceOf(BadCredentialsException.class);
+    }
+
+    @Test
+    void changePassword_shouldUpdatePassword_forTrainee() {
+        PasswordChangeRequest request = mock(PasswordChangeRequest.class);
+
+        User user = User.builder().username("user").password("hash").isActive(true).build();
+        Trainee trainee = Trainee.builder().user(user).build();
+
+        when(request.getUsername()).thenReturn("user");
+        when(request.getOldPassword()).thenReturn("old");
+        when(request.getNewPassword()).thenReturn("new");
+        when(traineeRepository.existsByUser_Username("user")).thenReturn(true);
+        when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));
+        when(passwordEncoder.matches("old", "hash")).thenReturn(true);
+        when(passwordEncoder.encode("new")).thenReturn("encoded");
+
+        service.changePassword(request);
+
+        verify(traineeRepository).save(any(Trainee.class));
+    }
+
+    @Test
+    void changePassword_shouldThrow_whenOldPasswordWrong() {
+        PasswordChangeRequest request = PasswordChangeRequest.builder().username("user").oldPassword("bad").newPassword("new").build();
+        User user = User.builder().username("user").password("hash").isActive(true).build();
+        Trainee trainee = Trainee.builder().user(user).build();
+
+        when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));
+        when(passwordEncoder.matches("bad", "hash")).thenReturn(false);
+
+        assertThatThrownBy(() -> service.changePassword(request)).isInstanceOf(BadCredentialsException.class);
+    }
+
+    @Test
+    void toggleActive_shouldToggleTrainee() {
+        ToggleActiveRequestDTO request = mock(ToggleActiveRequestDTO.class);
+        User user = User.builder().username("user").password("hash").isActive(true).build();
+        Trainee trainee = Trainee.builder().user(user).build();
+
+        when(request.getUsername()).thenReturn("user");
+        when(traineeRepository.existsByUser_Username("user")).thenReturn(true);
+        when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));
+
+        service.toggleActive(request);
+
+        verify(traineeRepository).save(any(Trainee.class));
+    }
+
+    @Test
+    void generateUsername_shouldReturnBase_whenFree() {
+        when(traineeRepository.existsByUser_Username("tom.tomas")).thenReturn(false);
+        when(trainerRepository.existsByUser_Username("tom.tomas")).thenReturn(false);
+
+        String result = service.generateUsername("tom", "tomas");
+
+        assertThat(result).isEqualTo("tom.tomas");
+    }
+
+    @Test
+    void generatePassword_shouldReturn10Chars() {
+        String result = service.generatePassword();
+
+        assertThat(result).hasSize(10);
+    }
+
+    @Test
+    void generateUsername_shouldAddSuffix_whenUsernameTaken() {
+        when(traineeRepository.existsByUser_Username(anyString())).thenReturn(false);
+
+        when(trainerRepository.existsByUser_Username(anyString())).thenAnswer(invocation -> {
+            String username = invocation.getArgument(0);
+
+            return switch (username) {
+                case "tom.tomas" -> true;
+                case "tom.tomas1" -> false;
+                default -> false;
+            };
+        });
+
+        String result = service.generateUsername("tom", "tomas");
+
+        assertThat(result).isEqualTo("tom.tomas1");
+    }
+
+    @Test
+    void toggleActive_shouldToggleTrainer_whenExists() {
+        ToggleActiveRequestDTO request = mock(ToggleActiveRequestDTO.class);
+        User user = User.builder().username("trainer1").password("hash").isActive(true).build();
+        Trainer trainer = Trainer.builder().user(user).build();
+
+        when(request.getUsername()).thenReturn("trainer1");
+        when(traineeRepository.existsByUser_Username("trainer1")).thenReturn(false);
+        when(trainerRepository.existsByUser_Username("trainer1")).thenReturn(true);
+        when(trainerRepository.findByUser_Username("trainer1")).thenReturn(Optional.of(trainer));
+
+        service.toggleActive(request);
+
+        verify(trainerRepository).save(any(Trainer.class));
+    }
+
+    @Test
+    void toggleActive_shouldThrow_whenUserNotFound() {
+        ToggleActiveRequestDTO request = mock(ToggleActiveRequestDTO.class);
+
+        when(request.getUsername()).thenReturn("unknown");
+        when(traineeRepository.existsByUser_Username("unknown")).thenReturn(false);
+        when(trainerRepository.existsByUser_Username("unknown")).thenReturn(false);
+
+        assertThatThrownBy(() -> service.toggleActive(request)).isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("User not found");
+    }
+
+    @Test
+    void authenticate_shouldCheckIfUserLocked() {
+        when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(User.builder().username("user").password("hash").build())
+                .map(user -> Trainee.builder().user(user).build()));
+        when(passwordEncoder.matches("pass", "hash")).thenReturn(true);
+        when(jwtService.generateToken("user")).thenReturn("token");
+
+        service.authenticate("user", "pass");
+
+        verify(bruteForceProtectionService).checkIfLocked("user");
+    }
+
+    @Test
+    void authenticate_shouldCallLoginSuccess_whenPasswordValid() {
+        User user = User.builder().username("user").password("hash").build();
+        Trainee trainee = Trainee.builder().user(user).build();
+
+        when(traineeRepository.findByUser_Username("user")).thenReturn(Optional.of(trainee));
+        when(passwordEncoder.matches("pass", "hash")).thenReturn(true);
+        when(jwtService.generateToken("user")).thenReturn("token");
+
+        service.authenticate("user", "pass");
+
+        verify(bruteForceProtectionService).loginSuccess("user");
+    }
+}
