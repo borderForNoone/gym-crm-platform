@@ -1,0 +1,7 @@
+package com.gym.crm.core.exception;
+
+public class ValidationFailedException extends RuntimeException {
+    public ValidationFailedException(String message) {
+        super(message);
+    }
+}
