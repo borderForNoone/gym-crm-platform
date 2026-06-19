@@ -1,5 +1,6 @@
 package com.gym.crm.core.service.impl;
 
+import com.gym.crm.core.client.workload.WorkloadRequestMapper;
 import com.gym.crm.core.facade.dto.CreatedTrainee;
 import com.gym.crm.core.facade.dto.TraineeInfoDTO;
 import com.gym.crm.core.facade.dto.TraineeResponseDTO;
@@ -20,9 +21,11 @@ import com.gym.crm.core.service.TraineeService;
 import com.gym.crm.core.service.UserProfileService;
 import com.gym.crm.core.service.common.CoreValidator;
 import com.gym.crm.core.service.common.UserInputValidator;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +41,8 @@ public class TraineeServiceImpl implements TraineeService {
     private final TrainingRepository trainingRepository;
     private final UserProfileService userCredentialGenerator;
     private final PasswordEncoder passwordEncoder;
+    private final WorkloadRequestMapper requestMapper;
+    private final ApplicationEventPublisher publisher;
     private final TraineeMapper mapper;
     private final TrainerMapper trainerMapper;
     private final CoreValidator validator;
@@ -112,10 +117,15 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Transactional
     @Override
-    public void deleteByUsername(String username) {
-        Trainee trainee = traineeRepository.findByUser_Username(username).orElseThrow();
+    public TraineeInfoDTO deleteByUsername(String username) {
+        userInputValidator.validateUsername(username);
 
+        Trainee trainee = traineeRepository.findByUser_Username(username).orElseThrow(() -> new EntityNotFoundException("Trainee not found"));
+
+        TraineeInfoDTO dto = mapper.toInfoDto(trainee);
         traineeRepository.delete(trainee);
+
+        return dto;
     }
 
     @Transactional(readOnly = true)

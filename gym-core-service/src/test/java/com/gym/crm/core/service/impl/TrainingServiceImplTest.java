@@ -1,8 +1,14 @@
 package com.gym.crm.core.service.impl;
 
+import com.gym.crm.core.client.workload.WorkloadRequestMapper;
+import com.gym.crm.core.client.workload.WorkloadUpdateEvent;
+import com.gym.crm.core.client.workload.model.ActionType;
+import com.gym.crm.core.client.workload.model.TrainerWorkloadRequest;
 import com.gym.crm.core.facade.dto.TrainingResponseDTO;
 import com.gym.crm.core.facade.dto.TrainingTypeDTO;
 import com.gym.crm.core.mapper.TrainingMapper;
+import com.gym.crm.core.model.Trainee;
+import com.gym.crm.core.model.Trainer;
 import com.gym.crm.core.model.Training;
 import com.gym.crm.core.model.TrainingType;
 import com.gym.crm.core.repository.TrainingRepository;
@@ -16,11 +22,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,19 +49,28 @@ class TrainingServiceImplTest {
     private TrainingTypeRepository trainingTypeRepository;
     @Mock
     private TrainingRepositoryCriteria trainingRepositoryCriteria;
+    @Mock
+    private ApplicationEventPublisher publisher;
+    @Mock
+    private WorkloadRequestMapper requestMapper;
 
     @InjectMocks
     private TrainingServiceImpl service;
 
     @Test
-    void create_shouldSaveAndReturnTraining() {
+    void create_shouldSaveAndPublishEvent() {
         Training training = buildTraining();
-        when(trainingRepository.save(training)).thenReturn(training);
+        TrainerWorkloadRequest request = new TrainerWorkloadRequest();
+
+        when(trainingRepository.save(any(Training.class))).thenReturn(training);
+        when(requestMapper.toRequest(any(Training.class), eq(ActionType.ADD))).thenReturn(request);
 
         Training result = service.create(training);
 
         assertThat(result).isEqualTo(training);
-        verify(trainingRepository).save(training);
+        verify(trainingRepository).save(any(Training.class));
+        verify(publisher).publishEvent(any(WorkloadUpdateEvent.class));
+        verify(requestMapper).toRequest(any(Training.class), eq(ActionType.ADD));
     }
 
     @Test
@@ -129,7 +148,18 @@ class TrainingServiceImplTest {
     }
 
     private Training buildTraining() {
-        return Training.builder().trainingName("Morning Cardio").trainingDate(LocalDate.of(2024, 3, 10)).trainingDuration(60).build();
+        Trainee trainee = Trainee.builder().id(1L).build();
+        Trainer trainer = Trainer.builder().id(1L).build();
+        TrainingType type = TrainingType.builder().id(1L).trainingTypeName("Cardio").build();
+
+        return Training.builder()
+                .trainingName("Morning Cardio")
+                .trainingDate(LocalDate.of(2024, Month.MARCH, 10))
+                .trainingDuration(60)
+                .trainee(trainee)
+                .trainer(trainer)
+                .trainingType(type)
+                .build();
     }
 
     private TrainingResponseDTO buildTrainingResponseDTO() {

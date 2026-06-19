@@ -1,5 +1,9 @@
 package com.gym.crm.core.service.impl;
 
+import com.gym.crm.core.client.workload.WorkloadRequestMapper;
+import com.gym.crm.core.client.workload.WorkloadUpdateEvent;
+import com.gym.crm.core.client.workload.model.ActionType;
+import com.gym.crm.core.client.workload.model.TrainerWorkloadRequest;
 import com.gym.crm.core.facade.dto.TrainingResponseDTO;
 import com.gym.crm.core.facade.dto.TrainingTypeDTO;
 import com.gym.crm.core.mapper.TrainingMapper;
@@ -14,6 +18,7 @@ import com.gym.crm.core.service.common.UserInputValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,13 +33,20 @@ public class TrainingServiceImpl implements TrainingService {
     private final TrainingRepository trainingRepository;
     private final TrainingTypeRepository trainingTypeRepository;
     private final TrainingRepositoryCriteria trainingRepositoryCriteria;
+    private final WorkloadRequestMapper requestMapper;
+    private final ApplicationEventPublisher publisher;
 
     @Transactional
     @Override
     public Training create(Training training) {
         log.info("Creating training: {}", training.getTrainingName());
+        Training created = trainingRepository.save(training);
 
-        return trainingRepository.save(training);
+        TrainerWorkloadRequest workloadRequest = requestMapper.toRequest(created, ActionType.ADD);
+        publisher.publishEvent(new WorkloadUpdateEvent(List.of(workloadRequest)));
+
+        log.info("Training created with id: {}", created.getId());
+        return created;
     }
 
     @Transactional(readOnly = true)

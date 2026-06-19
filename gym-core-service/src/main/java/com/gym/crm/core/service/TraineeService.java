@@ -25,7 +25,7 @@ public interface TraineeService {
 
     Trainee setActive(String username, boolean active);
 
-    void deleteByUsername(String username);
+    TraineeInfoDTO deleteByUsername(String username);
 
     List<Training> getTrainings(TraineeTrainingFilter filter);
 
