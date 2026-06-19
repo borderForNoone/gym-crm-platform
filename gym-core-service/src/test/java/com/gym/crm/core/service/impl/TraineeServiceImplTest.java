@@ -1,5 +1,6 @@
 package com.gym.crm.core.service.impl;
 
+import com.gym.crm.core.client.workload.WorkloadRequestMapper;
 import com.gym.crm.core.facade.dto.CreatedTrainee;
 import com.gym.crm.core.facade.dto.TraineeInfoDTO;
 import com.gym.crm.core.facade.dto.TraineeResponseDTO;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.HashSet;
@@ -60,6 +62,10 @@ class TraineeServiceImplTest {
     private CoreValidator validator;
     @Mock
     private UserInputValidator userInputValidator;
+    @Mock
+    private WorkloadRequestMapper requestMapper;
+    @Mock
+    private ApplicationEventPublisher publisher;
     @InjectMocks
     private TraineeServiceImpl service;
 
@@ -108,6 +114,24 @@ class TraineeServiceImplTest {
         assertThat(result).isNotNull();
         verify(userInputValidator).validate(dto, "Trainee");
         verify(traineeRepository).save(any());
+    }
+
+    @Test
+    void deleteByUsername_shouldReturnDtoAndDeleteEntity() {
+        String username = "user";
+        Trainee trainee = mock(Trainee.class);
+        TraineeInfoDTO dto = mock(TraineeInfoDTO.class);
+
+        when(traineeRepository.findByUser_Username(username)).thenReturn(Optional.of(trainee));
+        when(mapper.toInfoDto(trainee)).thenReturn(dto);
+
+        TraineeInfoDTO result = service.deleteByUsername(username);
+
+        assertThat(result).isNotNull();
+        verify(userInputValidator).validateUsername(username);
+        verify(traineeRepository).findByUser_Username(username);
+        verify(mapper).toInfoDto(trainee);
+        verify(traineeRepository).delete(trainee);
     }
 
     @Test
