@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -153,7 +154,7 @@ class TrainingServiceImplTest {
 
         return Training.builder()
                 .trainingName("Morning Cardio")
-                .trainingDate(LocalDate.of(2024, 3, 10))
+                .trainingDate(LocalDate.of(2024, Month.MARCH, 10))
                 .trainingDuration(60)
                 .trainee(trainee)
                 .trainer(trainer)

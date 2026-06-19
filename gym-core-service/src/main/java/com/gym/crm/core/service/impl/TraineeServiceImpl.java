@@ -181,9 +181,4 @@ public class TraineeServiceImpl implements TraineeService {
 
         return traineeRepository.save(result);
     }
-
-    private Trainee getTraineeEntityByUsername(String username) {
-        return traineeRepository.findByUser_Username(username)
-                .orElseThrow(() -> new EntityNotFoundException("Trainee not found"));
-    }
 }
