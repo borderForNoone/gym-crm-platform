@@ -21,3 +21,7 @@ app:
     base-path: /api/v1
   cors:
     allowed-origins: http://localhost:3000
+
+eureka:
+  client:
+    enabled: false

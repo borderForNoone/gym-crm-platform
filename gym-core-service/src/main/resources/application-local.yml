@@ -18,3 +18,8 @@ logging:
     root: INFO
     org.springframework: INFO
     com.gym.crm: DEBUG
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

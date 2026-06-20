@@ -13,6 +13,7 @@
     <modules>
         <module>gym-core-service</module>
         <module>workload-service</module>
+        <module>discovery-server</module>
     </modules>
 
     <groupId>com.gym.crm.platform</groupId>
@@ -21,10 +22,23 @@
     <properties>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
         <sonar.projectKey>borderForNoone_gym-crm-platform</sonar.projectKey>
         <sonar.organization>borderfornoone</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <plugins>
