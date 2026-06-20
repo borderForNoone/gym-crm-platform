@@ -1,6 +1,6 @@
 spring:
   application:
-    name: gym-crm
+    name: gym-core-service
   jpa:
     hibernate:
       ddl-auto: validate
@@ -44,3 +44,10 @@ app:
 workload:
   service:
     base-url: ${WORKLOAD_SERVICE_URL:}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:}
+  instance:
+    prefer-ip-address: true
