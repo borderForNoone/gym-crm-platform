@@ -21,6 +21,7 @@ springdoc:
 jwt:
   secret: ${JWT_SECRET}
   expiration: 3600000
+  service-expiration: 300000
 
 management:
   endpoints:
