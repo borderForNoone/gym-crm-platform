@@ -8,10 +8,20 @@ spring:
           uri: lb://gym-core-service
           predicates:
             - Path=/gym-crm-application/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: gymCoreCircuitBreaker
+                fallbackUri: forward:/fallback/gym-core-service
         - id: workload-service
           uri: lb://workload-service
           predicates:
             - Path=/workload-service/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: workloadCircuitBreaker
+                fallbackUri: forward:/fallback/workload-service
 
 server:
   port: ${API_GATEWAY_PORT}
@@ -22,3 +32,25 @@ eureka:
       defaultZone: ${EUREKA_SERVER_URL}
   instance:
     prefer-ip-address: true
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      gymCoreCircuitBreaker:
+        sliding-window-size: 5
+        minimum-number-of-calls: 3
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 2
+      workloadCircuitBreaker:
+        sliding-window-size: 5
+        minimum-number-of-calls: 3
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 2
+  timelimiter:
+    instances:
+      gymCoreCircuitBreaker:
+        timeout-duration: 3s
+      workloadCircuitBreaker:
+        timeout-duration: 3s
