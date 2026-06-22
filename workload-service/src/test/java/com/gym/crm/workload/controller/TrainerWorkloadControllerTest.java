@@ -15,9 +15,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDate;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -36,24 +39,21 @@ class TrainerWorkloadControllerTest {
     private static final int MONTH = 6;
     private static final int DURATION = 60;
     private static final String VALID_TOKEN = "valid-service-token";
+    private static final String SERVICE_SUBJECT = "gym-core-service";
+    private static final int EXPECTED_HTTP_OK = 200;
+    private static final int EXPECTED_HTTP_FORBIDDEN = 403;
 
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper mapper;
-
+    @MockitoBean
+    private ServiceJwtValidator serviceJwtValidator;
     @MockitoBean
     private TrainerWorkloadServiceImpl trainerWorkloadService;
 
-    @MockitoBean
-    private ServiceJwtValidator serviceJwtValidator;
-
     @Test
     void updateTrainerWorkload_shouldReturnOk_whenServiceTokenIsValid() throws Exception {
-        when(serviceJwtValidator.isValidServiceToken(VALID_TOKEN)).thenReturn(true);
-        when(serviceJwtValidator.extractSubject(VALID_TOKEN)).thenReturn("gym-core-service");
-
         TrainerWorkloadRequest request = new TrainerWorkloadRequest()
                 .trainerUsername(USERNAME)
                 .trainerFirstName(FIRST_NAME)
@@ -63,12 +63,17 @@ class TrainerWorkloadControllerTest {
                 .trainingDuration(DURATION)
                 .actionType(ActionType.ADD);
 
-        mockMvc.perform(put(BASE_URL)
+        when(serviceJwtValidator.isValidServiceToken(VALID_TOKEN)).thenReturn(true);
+        when(serviceJwtValidator.extractSubject(VALID_TOKEN)).thenReturn(SERVICE_SUBJECT);
+
+        MvcResult result = mockMvc.perform(put(BASE_URL)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + VALID_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
+                .andReturn();
 
+        int actualStatus = result.getResponse().getStatus();
+        assertThat(actualStatus).isEqualTo(EXPECTED_HTTP_OK);
         verify(trainerWorkloadService).updateTrainerWorkload(request);
     }
 
@@ -83,22 +88,31 @@ class TrainerWorkloadControllerTest {
                 .trainingDuration(DURATION)
                 .actionType(ActionType.ADD);
 
-        mockMvc.perform(put(BASE_URL).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(request))).andExpect(status().isForbidden());
+        MvcResult result = mockMvc.perform(put(BASE_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request)))
+                .andReturn();
+
+        int actualStatus = result.getResponse().getStatus();
+        assertThat(actualStatus).isEqualTo(EXPECTED_HTTP_FORBIDDEN);
     }
 
     @Test
     void getTrainerMonthlyWorkload_shouldReturnOk_whenServiceTokenIsValid() throws Exception {
         when(serviceJwtValidator.isValidServiceToken(VALID_TOKEN)).thenReturn(true);
-        when(serviceJwtValidator.extractSubject(VALID_TOKEN)).thenReturn("gym-core-service");
+        when(serviceJwtValidator.extractSubject(VALID_TOKEN)).thenReturn(SERVICE_SUBJECT);
         when(trainerWorkloadService.getMonthlyWorkload(USERNAME, YEAR, MONTH)).thenReturn(DURATION);
 
-        mockMvc.perform(get(BASE_URL + "/" + USERNAME)
+        MvcResult result = mockMvc.perform(get(BASE_URL + "/" + USERNAME)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + VALID_TOKEN)
                         .param("year", String.valueOf(YEAR))
                         .param("month", String.valueOf(MONTH)))
-                .andExpect(status().isOk())
-                .andExpect(content().string(String.valueOf(DURATION)));
+                .andReturn();
 
+        int actualStatus = result.getResponse().getStatus();
+        String actualBody = result.getResponse().getContentAsString();
+        assertThat(actualStatus).isEqualTo(EXPECTED_HTTP_OK);
+        assertThat(actualBody).isEqualTo(String.valueOf(DURATION));
         verify(trainerWorkloadService).getMonthlyWorkload(USERNAME, YEAR, MONTH);
     }
 }

@@ -94,6 +94,14 @@ public class GymFacadeTest {
     private static final long VALID_ID = 1L;
     private static final long TRAINER_ID = 2L;
 
+    private Trainee trainee;
+    private Trainer trainer;
+    private Training training;
+    private TraineeResponseDTO traineeResponseDTO;
+    private TrainerResponseDTO trainerResponseDTO;
+    private TrainingRequestDTO trainingRequestDTO;
+    private TrainingResponseDTO trainingResponseDTO;
+
     @Mock
     private TraineeService traineeService;
     @Mock
@@ -116,13 +124,6 @@ public class GymFacadeTest {
     private TrainingRestMapper trainingRestMapper;
 
     private GymFacade facade;
-    private Trainee trainee;
-    private Trainer trainer;
-    private Training training;
-    private TraineeResponseDTO traineeResponseDTO;
-    private TrainerResponseDTO trainerResponseDTO;
-    private TrainingRequestDTO trainingRequestDTO;
-    private TrainingResponseDTO trainingResponseDTO;
 
     @BeforeEach
     void setUp() {

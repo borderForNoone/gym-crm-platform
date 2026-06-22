@@ -32,19 +32,16 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
         TestRestClientConfig.class
 })
 class WorkloadServiceClientTest {
-
     private static final String USERNAME = "billy.herrington";
     private static final String FIRST_NAME = "Billy";
     private static final String LAST_NAME = "Herrington";
 
     @Autowired
-    private WorkloadServiceClient client;
-
-    @Autowired
     private ServiceTokenProvider serviceTokenProvider;
-
     @Autowired
     private MockRestServiceServer server;
+    @Autowired
+    private WorkloadServiceClient client;
 
     @BeforeEach
     void setUp() {
