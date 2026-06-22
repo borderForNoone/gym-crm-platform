@@ -66,6 +66,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 
 import javax.naming.AuthenticationException;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -623,7 +624,7 @@ public class GymFacadeTest {
         dto.setTraineeUsername("billy.herrington");
         dto.setTrainerUsername("ricardo.milos");
         dto.setTrainingName(TRAINING_NAME);
-        dto.setTrainingDate(LocalDate.of(2024, 1, 15));
+        dto.setTrainingDate(LocalDate.of(2024, Month.JANUARY, 15));
         dto.setTrainingDuration(60);
 
         return dto;

@@ -14,6 +14,9 @@
 
     <properties>
         <jsonwebtoken.version>0.12.6</jsonwebtoken.version>
+        <sonar.cpd.exclusions>
+            **/filter/TransactionLoggingFilter.java
+        </sonar.cpd.exclusions>
     </properties>
 
     <dependencies>
