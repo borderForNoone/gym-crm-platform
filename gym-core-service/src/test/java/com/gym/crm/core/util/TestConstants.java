@@ -6,6 +6,7 @@ import com.gym.crm.core.facade.dto.TrainerResponseDTO;
 import com.gym.crm.core.facade.dto.TrainingResponseDTO;
 
 import java.time.LocalDate;
+import java.time.Month;
 
 public class TestConstants {
     private TestConstants() {
@@ -23,7 +24,7 @@ public class TestConstants {
     private static final String TRAINING_TYPE_NAME = "Cardio";
     private static final String TRAINER_FIRST_NAME = "Owen";
     private static final String TRAINER_LAST_NAME = "Castleberry";
-    private static final LocalDate TRAINING_DATE = LocalDate.of(2024, 1, 15);
+    private static final LocalDate TRAINING_DATE = LocalDate.of(2024, Month.JANUARY, 15);
     private static final int TRAINING_DURATION = 60;
     private static final long VALID_ID = 1L;
     private static final String TOKEN = "token";

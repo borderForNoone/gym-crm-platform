@@ -72,7 +72,7 @@ class TrainingServiceImplTest {
         dto.setTraineeUsername("Nora.Pemberton");
         dto.setTrainerUsername("Callum.Whitfield");
         dto.setTrainingName("Morning Cardio");
-        dto.setTrainingDate(LocalDate.of(2026, 6, 10));
+        dto.setTrainingDate(LocalDate.of(2026, Month.JUNE, 10));
         dto.setTrainingDuration(60);
 
         TrainingType type = TrainingType.builder().id(1L).trainingTypeName("Yoga").build();
