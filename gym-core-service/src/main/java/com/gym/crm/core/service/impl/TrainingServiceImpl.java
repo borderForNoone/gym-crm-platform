@@ -4,10 +4,16 @@ import com.gym.crm.core.client.workload.WorkloadRequestMapper;
 import com.gym.crm.core.client.workload.WorkloadUpdateEvent;
 import com.gym.crm.core.client.workload.model.ActionType;
 import com.gym.crm.core.client.workload.model.TrainerWorkloadRequest;
+import com.gym.crm.core.facade.dto.TrainingRequestDTO;
 import com.gym.crm.core.facade.dto.TrainingResponseDTO;
 import com.gym.crm.core.facade.dto.TrainingTypeDTO;
 import com.gym.crm.core.mapper.TrainingMapper;
+import com.gym.crm.core.model.Trainee;
+import com.gym.crm.core.model.Trainer;
 import com.gym.crm.core.model.Training;
+import com.gym.crm.core.model.TrainingType;
+import com.gym.crm.core.repository.TraineeRepository;
+import com.gym.crm.core.repository.TrainerRepository;
 import com.gym.crm.core.repository.TrainingRepository;
 import com.gym.crm.core.repository.TrainingRepositoryCriteria;
 import com.gym.crm.core.repository.TrainingTypeRepository;
@@ -33,19 +39,39 @@ public class TrainingServiceImpl implements TrainingService {
     private final TrainingRepository trainingRepository;
     private final TrainingTypeRepository trainingTypeRepository;
     private final TrainingRepositoryCriteria trainingRepositoryCriteria;
+    private final TraineeRepository traineeRepository;
+    private final TrainerRepository trainerRepository;
     private final WorkloadRequestMapper requestMapper;
     private final ApplicationEventPublisher publisher;
 
     @Transactional
     @Override
-    public Training create(Training training) {
+    public Training create(TrainingRequestDTO request) {
+        Trainee trainee = traineeRepository.findByUser_Username(request.getTraineeUsername())
+                .orElseThrow(() -> new IllegalArgumentException("Trainee not found with username: " + request.getTraineeUsername()));
+        Trainer trainer = trainerRepository.findByUser_Username(request.getTrainerUsername())
+                .orElseThrow(() -> new IllegalArgumentException("Trainer not found with username: " + request.getTrainerUsername()));
+
+        TrainingType type = trainer.getSpecialization();
+        if (type == null) {
+            throw new IllegalArgumentException("Trainer has no specialization");
+        }
+
+        Training training = Training.builder()
+                .trainingName(request.getTrainingName())
+                .trainingDate(request.getTrainingDate())
+                .trainingDuration(request.getTrainingDuration())
+                .trainingType(type)
+                .trainee(trainee)
+                .trainer(trainer)
+                .build();
+
         log.info("Creating training: {}", training.getTrainingName());
         Training created = trainingRepository.save(training);
 
         TrainerWorkloadRequest workloadRequest = requestMapper.toRequest(created, ActionType.ADD);
         publisher.publishEvent(new WorkloadUpdateEvent(List.of(workloadRequest)));
 
-        log.info("Training created with id: {}", created.getId());
         return created;
     }
 

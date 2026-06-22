@@ -12,8 +12,7 @@ import org.mapstruct.factory.Mappers;
 
 import java.time.LocalDate;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TrainingMapperTest {
     private static final String TRAINING_NAME = "Morning Cardio";
@@ -27,35 +26,43 @@ class TrainingMapperTest {
     private final TrainingMapper mapper = Mappers.getMapper(TrainingMapper.class);
 
     @Test
-    void toEntity_shouldMapAllFields_whenMapFromTrainingRequestDTO() {
-        TrainingRequestDTO trainingRequestDTO = buildTrainingRequestDTO();
+    void toEntity_shouldMapBasicFields_whenMapFromTrainingRequestDTO() {
+        TrainingRequestDTO dto = buildTrainingRequestDTO();
 
-        Training training = mapper.toEntity(trainingRequestDTO);
+        Training training = mapper.toEntity(dto);
 
         assertNotNull(training);
-        assertEquals(TRAINING_NAME, training.getTrainingName());
-        assertEquals(TRAINING_TYPE_NAME, training.getTrainingType().getTrainingTypeName());
-        assertEquals(TRAINING_DATE, training.getTrainingDate());
-        assertEquals(TRAINING_DURATION, training.getTrainingDuration());
+        assertEquals(dto.getTrainingName(), training.getTrainingName());
+        assertEquals(dto.getTrainingDate(), training.getTrainingDate());
+        assertEquals(dto.getTrainingDuration(), training.getTrainingDuration());
+        assertNull(training.getTrainingType());
+        assertNull(training.getTrainee());
+        assertNull(training.getTrainer());
     }
 
     @Test
     void toDto_shouldMapAllFields_whenMapFromTrainingEntity() {
         Training training = buildTraining();
 
-        TrainingResponseDTO trainingResponseDTO = mapper.toDto(training);
+        TrainingResponseDTO responseDTO = mapper.toDto(training);
 
-        assertNotNull(trainingResponseDTO);
-        assertEquals(TRAINEE_ID, trainingResponseDTO.getTraineeId());
-        assertEquals(TRAINER_ID, trainingResponseDTO.getTrainerId());
-        assertEquals(TRAINING_NAME, trainingResponseDTO.getTrainingName());
-        assertEquals(TRAINING_TYPE_NAME, trainingResponseDTO.getTrainingTypeName());
-        assertEquals(TRAINING_DATE, trainingResponseDTO.getTrainingDate());
-        assertEquals(TRAINING_DURATION, trainingResponseDTO.getTrainingDuration());
+        assertNotNull(responseDTO);
+        assertEquals(TRAINEE_ID, responseDTO.getTraineeId());
+        assertEquals(TRAINER_ID, responseDTO.getTrainerId());
+        assertEquals(TRAINING_NAME, responseDTO.getTrainingName());
+        assertEquals(TRAINING_TYPE_NAME, responseDTO.getTrainingTypeName());
+        assertEquals(TRAINING_DATE, responseDTO.getTrainingDate());
+        assertEquals(TRAINING_DURATION, responseDTO.getTrainingDuration());
     }
 
     private TrainingRequestDTO buildTrainingRequestDTO() {
-        return new TrainingRequestDTO(TRAINEE_ID, TRAINER_ID, TRAINING_NAME, TRAINING_TYPE_NAME, TRAINING_DATE, TRAINING_DURATION);
+        TrainingRequestDTO dto = new TrainingRequestDTO();
+        dto.setTraineeUsername("tom.tomas");
+        dto.setTrainerUsername("julia.tomas");
+        dto.setTrainingName(TRAINING_NAME);
+        dto.setTrainingDate(TRAINING_DATE);
+        dto.setTrainingDuration(TRAINING_DURATION);
+        return dto;
     }
 
     private Training buildTraining() {
@@ -81,10 +88,8 @@ class TrainingMapperTest {
                 .dateOfBirth(LocalDate.of(2000, 1, 1))
                 .address("10 Sheep St")
                 .build();
-        Trainer trainer = Trainer.builder()
-                .id(TRAINER_ID)
-                .user(trainerUser)
-                .specialization(TrainingType.builder().trainingTypeName(TRAINING_TYPE_NAME).build()).build();
+        Trainer trainer = Trainer.builder().id(TRAINER_ID).user(trainerUser).specialization(TrainingType.builder().trainingTypeName(TRAINING_TYPE_NAME).build())
+                .build();
 
         return Training.builder()
                 .id(VALID_ID)
@@ -93,6 +98,7 @@ class TrainingMapperTest {
                 .trainingName(TRAINING_NAME)
                 .trainingType(TrainingType.builder().trainingTypeName(TRAINING_TYPE_NAME).build())
                 .trainingDate(TRAINING_DATE)
-                .trainingDuration(TRAINING_DURATION).build();
+                .trainingDuration(TRAINING_DURATION)
+                .build();
     }
 }

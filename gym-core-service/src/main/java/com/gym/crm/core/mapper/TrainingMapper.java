@@ -10,8 +10,10 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface TrainingMapper {
-    @Mapping(target = "trainingType.trainingTypeName", source = "trainingTypeName")
-    Training toEntity(TrainingRequestDTO trainingRequestDTO);
+    @Mapping(target = "trainee", ignore = true)
+    @Mapping(target = "trainer", ignore = true)
+    @Mapping(target = "trainingType", ignore = true)
+    Training toEntity(TrainingRequestDTO dto);
 
     @Mapping(source = "trainee.id", target = "traineeId")
     @Mapping(source = "trainer.id", target = "trainerId")

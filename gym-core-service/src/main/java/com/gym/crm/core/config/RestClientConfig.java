@@ -3,6 +3,7 @@ package com.gym.crm.core.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.web.client.RestClient;
 
 @Configuration
@@ -11,6 +12,7 @@ public class RestClientConfig {
     private String baseURL;
 
     @Bean
+    @Primary
     public RestClient workloadRestClient(RestClient.Builder builder) {
         return builder
                 .baseUrl(baseURL)

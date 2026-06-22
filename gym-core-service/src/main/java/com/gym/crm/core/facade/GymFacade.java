@@ -155,8 +155,8 @@ public class GymFacade {
     @PreAuthorize("#request.username == authentication.principal.username")
     public TrainingResponseDTO createTraining(TrainingCreateRequest request) {
         TrainingRequestDTO dto = trainingRestMapper.toDto(request);
-        Training training = trainingMapper.toEntity(dto);
-        Training saved = trainingService.create(training);
+
+        Training saved = trainingService.create(dto);
 
         return trainingMapper.toDto(saved);
     }
