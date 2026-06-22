@@ -11,6 +11,10 @@ spring:
     change-log: classpath:db/migration/master.xml
     enabled: true
 
+logging:
+  pattern:
+    level: "%5p [txId=%X{transactionId}]"
+
 springdoc:
   swagger-ui:
     url: /gia-api.yml

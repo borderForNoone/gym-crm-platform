@@ -299,16 +299,18 @@ public class GymFacadeTest {
     void createTraining_shouldSaveAndReturnResponseDTO() {
         TrainingCreateRequest request = new TrainingCreateRequest();
         TrainingRequestDTO dto = trainingRequestDTO;
+        TrainingResponseDTO expectedResponse = trainingResponseDTO;
 
         when(trainingRestMapper.toDto(request)).thenReturn(dto);
-        when(trainingMapper.toEntity(dto)).thenReturn(training);
-        when(trainingService.create(training)).thenReturn(training);
+        when(trainingService.create(dto)).thenReturn(training);
+        when(trainingMapper.toDto(training)).thenReturn(expectedResponse);
 
-        facade.createTraining(request);
+        TrainingResponseDTO result = facade.createTraining(request);
 
         verify(trainingRestMapper).toDto(request);
-        verify(trainingMapper).toEntity(dto);
-        verify(trainingService).create(training);
+        verify(trainingService).create(dto);
+        verify(trainingMapper).toDto(training);
+        assertThat(result).isEqualTo(expectedResponse);
     }
 
     @Test
@@ -617,7 +619,14 @@ public class GymFacadeTest {
     }
 
     private TrainingRequestDTO buildTrainingRequestDTO() {
-        return new TrainingRequestDTO(VALID_ID, VALID_ID, TRAINING_NAME, TRAINING_TYPE_NAME, LocalDate.of(2024, 1, 15), 60);
+        TrainingRequestDTO dto = new TrainingRequestDTO();
+        dto.setTraineeUsername("billy.herrington");
+        dto.setTrainerUsername("ricardo.milos");
+        dto.setTrainingName(TRAINING_NAME);
+        dto.setTrainingDate(LocalDate.of(2024, 1, 15));
+        dto.setTrainingDuration(60);
+
+        return dto;
     }
 
     private TrainingResponseDTO buildTrainingResponseDTO() {

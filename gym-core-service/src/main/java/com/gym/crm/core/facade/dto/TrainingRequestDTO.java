@@ -15,14 +15,12 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TrainingRequestDTO {
-    @NotNull
-    private Long traineeId;
-    @NotNull
-    private Long trainerId;
+    @NotBlank
+    private String traineeUsername;
+    @NotBlank
+    private String trainerUsername;
     @NotBlank
     private String trainingName;
-    @NotBlank
-    private String trainingTypeName;
     @NotNull
     private LocalDate trainingDate;
     @Min(1)

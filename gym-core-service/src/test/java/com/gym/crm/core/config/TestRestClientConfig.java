@@ -9,7 +9,6 @@ import org.springframework.web.client.RestClient;
 @TestConfiguration
 @PropertySource(value = "classpath:application-test.yml")
 public class TestRestClientConfig {
-
     @Value("${workload.service.base-url}")
     private String baseUrl;
 
