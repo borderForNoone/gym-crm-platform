@@ -20,50 +20,58 @@ import java.util.UUID;
 public class TransactionLoggingFilter extends OncePerRequestFilter {
     private static final String TRANSACTION_ID_HEADER = "X-Transaction-Id";
     private static final String MDC_TRANSACTION_ID_KEY = "transactionId";
+    private static final int ERROR_STATUS_THRESHOLD = 400;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
-        String transactionId = resolveTransactionId(request, response);
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String transactionId = currentOrNewTransactionId(request);
+        response.setHeader(TRANSACTION_ID_HEADER, transactionId);
         MDC.put(MDC_TRANSACTION_ID_KEY, transactionId);
 
+        RequestTimer timer = RequestTimer.start();
         ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(response);
-        long startTime = System.currentTimeMillis();
 
         try {
-            logIncomingRequest(request, transactionId);
+            log.info(">>> [{} {}] ip={} auth={} txId={}",
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    request.getRemoteAddr(),
+                    SensitiveDataMasker.maskAuthHeader(request.getHeader("Authorization")),
+                    transactionId);
+
             filterChain.doFilter(request, wrappedResponse);
-            logOutgoingResponse(request, wrappedResponse, System.currentTimeMillis() - startTime);
+
+            logCompletion(request, wrappedResponse.getStatus(), timer.elapsedMillis());
         } finally {
             wrappedResponse.copyBodyToResponse();
             MDC.remove(MDC_TRANSACTION_ID_KEY);
         }
     }
 
-    private String resolveTransactionId(HttpServletRequest request, HttpServletResponse response) {
-        String transactionId = request.getHeader(TRANSACTION_ID_HEADER);
-        if (transactionId == null || transactionId.isBlank()) {
-            transactionId = UUID.randomUUID().toString();
+    private String currentOrNewTransactionId(HttpServletRequest request) {
+        String header = request.getHeader(TRANSACTION_ID_HEADER);
+
+        return (header == null || header.isBlank()) ? UUID.randomUUID().toString() : header;
+    }
+
+    private void logCompletion(HttpServletRequest request, int status, long durationMillis) {
+        String message = "<<< [{} {}] status={} duration={}ms";
+        Object[] args = {request.getMethod(), request.getRequestURI(), status, durationMillis};
+
+        if (status >= ERROR_STATUS_THRESHOLD) {
+            log.warn(message, args);
+        } else {
+            log.info(message, args);
+        }
+    }
+
+    private record RequestTimer(long startedAtMillis) {
+        static RequestTimer start() {
+            return new RequestTimer(System.currentTimeMillis());
         }
 
-        response.setHeader(TRANSACTION_ID_HEADER, transactionId);
-
-        return transactionId;
-    }
-
-    private void logIncomingRequest(HttpServletRequest request, String transactionId) {
-        String authHeader = request.getHeader("Authorization");
-        log.info(">>> [{} {}] ip={} auth={} txId={}", request.getMethod(), request.getRequestURI(), request.getRemoteAddr(),
-                SensitiveDataMasker.maskAuthHeader(authHeader), transactionId);
-    }
-
-    private void logOutgoingResponse(HttpServletRequest request, ContentCachingResponseWrapper wrappedResponse, long duration) {
-        int status = wrappedResponse.getStatus();
-
-        if (status >= 400) {
-            log.warn("<<< [{} {}] status={} duration={}ms", request.getMethod(), request.getRequestURI(), status, duration);
-        } else {
-            log.info("<<< [{} {}] status={} duration={}ms", request.getMethod(), request.getRequestURI(), status, duration);
+        long elapsedMillis() {
+            return System.currentTimeMillis() - startedAtMillis;
         }
     }
 }
