@@ -43,27 +43,33 @@ public class FallbackController {
     }
 
     private ResponseEntity<FallbackResponse> handleException(String serviceName, Throwable throwable, String txId) {
+        HttpStatus httpStatus;
+        int status;
+        String message;
+
         if (throwable instanceof TimeoutException) {
             log.warn("TIMEOUT txId={}, service={}", txId, serviceName);
 
-            return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
-                    .body(new FallbackResponse(
-                            Instant.now(),
-                            504,
-                            "Timeout: " + serviceName + " did not respond within 3s",
-                            serviceName,
-                            txId
-                    ));
+            httpStatus = HttpStatus.GATEWAY_TIMEOUT;
+            status = 504;
+            message = "Timeout: " + serviceName + " did not respond within 3s";
         } else if (throwable instanceof ConnectException) {
             log.warn("CONNECT ERROR txId={}, service={}", txId, serviceName);
 
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(new FallbackResponse(Instant.now(), 503, "Connection error: Cannot connect to " + serviceName, serviceName, txId));
+            httpStatus = HttpStatus.SERVICE_UNAVAILABLE;
+            status = 503;
+            message = "Connection error: Cannot connect to " + serviceName;
         } else {
             log.warn("UNKNOWN ERROR txId={}, service={}, error={}", txId, serviceName, throwable != null ? throwable.getClass().getSimpleName() : "null");
 
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new FallbackResponse(Instant.now(), 503, DEFAULT_MESSAGE, serviceName, txId));
+            httpStatus = HttpStatus.SERVICE_UNAVAILABLE;
+            status = 503;
+            message = DEFAULT_MESSAGE;
         }
+
+        FallbackResponse response = new FallbackResponse(Instant.now(), status, message, serviceName, txId);
+
+        return ResponseEntity.status(httpStatus).body(response);
     }
 
     private String extractTxId(ServerWebExchange exchange) {
