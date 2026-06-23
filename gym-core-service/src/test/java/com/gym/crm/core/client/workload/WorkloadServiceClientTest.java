@@ -3,29 +3,38 @@ package com.gym.crm.core.client.workload;
 import com.gym.crm.core.client.workload.model.ActionType;
 import com.gym.crm.core.client.workload.model.TrainerWorkloadRequest;
 import com.gym.crm.core.config.TestRestClientConfig;
+import io.github.resilience4j.springboot3.circuitbreaker.autoconfigure.CircuitBreakerAutoConfiguration;
+import io.github.resilience4j.springboot3.timelimiter.autoconfigure.TimeLimiterAutoConfiguration;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.autoconfigure.aop.AopAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
+import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JAutoConfiguration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.Base64;
 
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 @RestClientTest
+@ImportAutoConfiguration({AopAutoConfiguration.class, CircuitBreakerAutoConfiguration.class, TimeLimiterAutoConfiguration.class, Resilience4JAutoConfiguration.class})
 @ContextConfiguration(classes = {
         WorkloadServiceClient.class,
         ServiceTokenProvider.class,
@@ -52,14 +61,7 @@ class WorkloadServiceClientTest {
 
     @Test
     void updateTrainerWorkload_shouldSendPutRequest_withBearerAuthorizationHeader() {
-        TrainerWorkloadRequest request = new TrainerWorkloadRequest()
-                .trainerUsername(USERNAME)
-                .trainerFirstName(FIRST_NAME)
-                .trainerLastName(LAST_NAME)
-                .isActive(true)
-                .trainingDate(LocalDate.of(2026, Month.JUNE, 10))
-                .trainingDuration(60)
-                .actionType(ActionType.ADD);
+        TrainerWorkloadRequest request = buildRequest();
         server.expect(requestTo("/trainer-workloads"))
                 .andExpect(method(HttpMethod.PUT))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -72,5 +74,38 @@ class WorkloadServiceClientTest {
         client.updateTrainerWorkload(request);
 
         server.verify();
+    }
+
+    @Test
+    void updateTrainerWorkload_shouldNotPropagateException_whenWorkloadServiceReturnsServerError() {
+        TrainerWorkloadRequest request = buildRequest();
+        server.expect(requestTo("/trainer-workloads"))
+                .andExpect(method(HttpMethod.PUT))
+                .andRespond(withServerError());
+
+        assertThatNoException().isThrownBy(() -> client.updateTrainerWorkload(request));
+    }
+
+    @Test
+    void updateTrainerWorkload_shouldNotPropagateException_whenConnectionFails() {
+        TrainerWorkloadRequest request = buildRequest();
+        server.expect(requestTo("/trainer-workloads"))
+                .andExpect(method(HttpMethod.PUT))
+                .andRespond(httpRequest -> {
+                    throw new IOException("connection refused");
+                });
+
+        assertThatNoException().isThrownBy(() -> client.updateTrainerWorkload(request));
+    }
+
+    private TrainerWorkloadRequest buildRequest() {
+        return new TrainerWorkloadRequest()
+                .trainerUsername(USERNAME)
+                .trainerFirstName(FIRST_NAME)
+                .trainerLastName(LAST_NAME)
+                .isActive(true)
+                .trainingDate(LocalDate.of(2026, Month.JUNE, 10))
+                .trainingDuration(60)
+                .actionType(ActionType.ADD);
     }
 }
