@@ -44,6 +44,8 @@ public class TokenBlacklistService {
     }
 
     public boolean isBlacklisted(String token) {
-        return template.hasKey("blacklist:" + token);
+        String tokenHash = hashToken(token);
+
+        return template.hasKey("blacklist:" + tokenHash);
     }
 }

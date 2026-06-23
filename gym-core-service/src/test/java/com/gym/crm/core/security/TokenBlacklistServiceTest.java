@@ -36,22 +36,24 @@ class TokenBlacklistServiceTest {
 
     @Test
     void isBlacklisted_shouldReturnFalse_whenTokenNotBlacklisted() {
-        when(template.hasKey("blacklist:" + TOKEN)).thenReturn(false);
+        String hashedToken = ReflectionTestUtils.invokeMethod(tokenBlacklistService, "hashToken", TOKEN);
+        when(template.hasKey(BLACKLIST_KEY + hashedToken)).thenReturn(false);
 
         boolean actual = tokenBlacklistService.isBlacklisted(TOKEN);
 
         assertThat(actual).isFalse();
-        verify(template).hasKey("blacklist:" + TOKEN);
+        verify(template).hasKey(BLACKLIST_KEY + hashedToken);
     }
 
     @Test
     void isBlacklisted_shouldReturnTrue_whenTokenBlacklisted() {
-        when(template.hasKey("blacklist:" + TOKEN)).thenReturn(true);
+        String hashedToken = ReflectionTestUtils.invokeMethod(tokenBlacklistService, "hashToken", TOKEN);
+        when(template.hasKey(BLACKLIST_KEY + hashedToken)).thenReturn(true);
 
         boolean actual = tokenBlacklistService.isBlacklisted(TOKEN);
 
         assertThat(actual).isTrue();
-        verify(template).hasKey("blacklist:" + TOKEN);
+        verify(template).hasKey(BLACKLIST_KEY + hashedToken);
     }
 
     @Test
@@ -64,10 +66,7 @@ class TokenBlacklistServiceTest {
         tokenBlacklistService.blacklist(TOKEN);
 
         verify(template).opsForValue();
-        verify(valueOps).set(eq(BLACKLIST_KEY + hashToken),
-                eq("true"),
-                anyLong(),
-                eq(TimeUnit.MILLISECONDS));
+        verify(valueOps).set(eq(BLACKLIST_KEY + hashToken), eq("true"), anyLong(), eq(TimeUnit.MILLISECONDS));
     }
 
     @Test
@@ -77,5 +76,21 @@ class TokenBlacklistServiceTest {
         tokenBlacklistService.blacklist(TOKEN);
 
         verify(template, never()).opsForValue();
+    }
+
+    @Test
+    void blacklist_and_check_shouldWorkEndToEnd() {
+        String token = "token";
+        String hashed = ReflectionTestUtils.invokeMethod(tokenBlacklistService, "hashToken", token);
+        ValueOperations<String, String> valueOps = mock(ValueOperations.class);
+
+        when(template.opsForValue()).thenReturn(valueOps);
+        when(jwtService.extractExpiration(token)).thenReturn(new Date(System.currentTimeMillis() + 10000));
+        when(template.hasKey(BLACKLIST_KEY + hashed)).thenReturn(true);
+
+        tokenBlacklistService.blacklist(token);
+
+        boolean result = tokenBlacklistService.isBlacklisted(token);
+        assertThat(result).isTrue();
     }
 }

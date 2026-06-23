@@ -50,6 +50,20 @@ workload:
   service:
     base-url: ${WORKLOAD_SERVICE_URL:}
 
+resilience4j:
+  circuitbreaker:
+    instances:
+      workloadServiceClient:
+        sliding-window-size: 5
+        minimum-number-of-calls: 3
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 2
+  timelimiter:
+    instances:
+      workloadServiceClient:
+        timeout-duration: 3s
+
 eureka:
   client:
     service-url:
