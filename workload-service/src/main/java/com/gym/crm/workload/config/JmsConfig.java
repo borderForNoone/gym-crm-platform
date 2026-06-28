@@ -11,6 +11,8 @@ import org.springframework.jms.support.converter.MappingJackson2MessageConverter
 import org.springframework.jms.support.converter.MessageConverter;
 import org.springframework.jms.support.converter.MessageType;
 
+import java.util.List;
+
 @Configuration
 public class JmsConfig {
     @Value("${spring.activemq.broker-url}")
@@ -30,12 +32,15 @@ public class JmsConfig {
         ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
         factory.setUserName(user);
         factory.setPassword(password);
+        factory.setTrustedPackages(List.of("gym.crm.platform.workload.openapi"));
+        factory.setTrustAllPackages(false);
 
         RedeliveryPolicy redeliveryPolicy = new RedeliveryPolicy();
         redeliveryPolicy.setMaximumRedeliveries(maxRedeliveries);
         redeliveryPolicy.setInitialRedeliveryDelay(1000);
         redeliveryPolicy.setUseExponentialBackOff(true);
         redeliveryPolicy.setBackOffMultiplier(2.0);
+
         factory.setRedeliveryPolicy(redeliveryPolicy);
 
         return factory;
