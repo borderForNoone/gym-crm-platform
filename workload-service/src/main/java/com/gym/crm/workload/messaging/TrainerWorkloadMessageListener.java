@@ -38,14 +38,21 @@ public class TrainerWorkloadMessageListener {
     }
 
     private void validate(TrainerWorkloadRequest request) {
-        if (request.getTrainerUsername() == null || request.getTrainerUsername().isBlank()) {
-            throw new IllegalArgumentException("trainerUsername is required");
+        requireNotNull(request.getTrainerUsername(), "trainerUsername is required");
+        requireNotBlank(request.getTrainerUsername(), "trainerUsername is required");
+        requireNotNull(request.getTrainingDate(), "trainingDate is required");
+        requireNotNull(request.getActionType(), "actionType is required");
+    }
+
+    private void requireNotNull(Object value, String message) {
+        if (value == null) {
+            throw new IllegalArgumentException(message);
         }
-        if (request.getTrainingDate() == null) {
-            throw new IllegalArgumentException("trainingDate is required");
-        }
-        if (request.getActionType() == null) {
-            throw new IllegalArgumentException("actionType is required");
+    }
+
+    private void requireNotBlank(String value, String message) {
+        if (value.isBlank()) {
+            throw new IllegalArgumentException(message);
         }
     }
 
