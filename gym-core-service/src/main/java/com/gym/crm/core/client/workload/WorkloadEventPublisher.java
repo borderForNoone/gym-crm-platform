@@ -26,19 +26,14 @@ public class WorkloadEventPublisher {
 
     public void publish(TrainerWorkloadRequest request) {
         String transactionId = MDC.get(MDC_TRANSACTION_ID_KEY);
-
         log.info("Publishing workload event [{}] action={} trainer={} txId={}",
                 destination, request.getActionType(), request.getTrainerUsername(), transactionId);
 
         try {
             jmsTemplate.convertAndSend(destination, request, message -> withTransactionId(message, transactionId));
-
-            log.info("Workload event published for trainer={} action={} txId={}",
-                    request.getTrainerUsername(), request.getActionType(), transactionId);
+            log.info("Workload event published for trainer={} action={} txId={}", request.getTrainerUsername(), request.getActionType(), transactionId);
         } catch (JmsException exception) {
-            log.error("Failed to publish workload event for trainer={} action={} txId={} message={}",
-                    request.getTrainerUsername(), request.getActionType(), transactionId, exception.getMessage());
-
+            log.error("Failed to publish workload event for trainer={} action={} txId={} message={}", request.getTrainerUsername(), request.getActionType(), transactionId, exception.getMessage());
             throw exception;
         }
     }

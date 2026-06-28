@@ -65,32 +65,28 @@ class WorkloadEventPublisherTest {
     @Test
     void publish_shouldSetTransactionIdProperty_whenMdcHasValue() throws JMSException {
         String expectedTransactionId = "tx-abc-123";
+        ArgumentCaptor<MessagePostProcessor> captor = ArgumentCaptor.forClass(MessagePostProcessor.class);
+        Message message = mock(Message.class);
         MDC.put(MDC_TRANSACTION_ID_KEY, expectedTransactionId);
         TrainerWorkloadRequest request = buildRequest();
 
         publisher.publish(request);
 
-        ArgumentCaptor<MessagePostProcessor> captor = ArgumentCaptor.forClass(MessagePostProcessor.class);
         verify(jmsTemplate).convertAndSend(eq(DESTINATION), eq(request), captor.capture());
-
-        Message message = mock(Message.class);
         captor.getValue().postProcessMessage(message);
-
         verify(message).setStringProperty("transactionId", expectedTransactionId);
     }
 
     @Test
     void publish_shouldNotSetTransactionIdProperty_whenMdcIsEmpty() throws JMSException {
+        ArgumentCaptor<MessagePostProcessor> captor = ArgumentCaptor.forClass(MessagePostProcessor.class);
+        Message message = mock(Message.class);
         TrainerWorkloadRequest request = buildRequest();
 
         publisher.publish(request);
 
-        ArgumentCaptor<MessagePostProcessor> captor = ArgumentCaptor.forClass(MessagePostProcessor.class);
         verify(jmsTemplate).convertAndSend(eq(DESTINATION), eq(request), captor.capture());
-
-        Message message = mock(Message.class);
         captor.getValue().postProcessMessage(message);
-
         verify(message, never()).setStringProperty(anyString(), anyString());
     }
 
@@ -100,8 +96,7 @@ class WorkloadEventPublisherTest {
         doThrow(new InvalidDestinationException(new jakarta.jms.InvalidDestinationException("queue not found")))
                 .when(jmsTemplate).convertAndSend(eq(DESTINATION), eq(request), any(MessagePostProcessor.class));
 
-        assertThatThrownBy(() -> publisher.publish(request))
-                .isInstanceOf(InvalidDestinationException.class);
+        assertThatThrownBy(() -> publisher.publish(request)).isInstanceOf(InvalidDestinationException.class);
     }
 
     private TrainerWorkloadRequest buildRequest() {
