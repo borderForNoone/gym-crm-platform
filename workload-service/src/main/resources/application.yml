@@ -1,6 +1,20 @@
 spring:
   application:
     name: workload-service
+  activemq:
+    broker-url: ${ACTIVEMQ_BROKER_URL}
+    user: ${ACTIVEMQ_USER}
+    password: ${ACTIVEMQ_PASSWORD}
+  jms:
+    pub-sub-domain: false
+
+activemq:
+  destination:
+    trainer-workload: trainer-workload-queue
+    trainer-workload-dlq: trainer-workload-dlq
+
+  redelivery:
+    max-redeliveries: 3
 
 logging:
   pattern:
@@ -20,6 +34,3 @@ eureka:
       defaultZone: ${EUREKA_SERVER_URL:}
   instance:
     prefer-ip-address: true
-
-jwt:
-  secret: ${JWT_SECRET}

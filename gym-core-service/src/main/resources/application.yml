@@ -10,6 +10,16 @@ spring:
   liquibase:
     change-log: classpath:db/migration/master.xml
     enabled: true
+  activemq:
+    broker-url: ${ACTIVEMQ_BROKER_URL}
+    user: ${ACTIVEMQ_USER}
+    password: ${ACTIVEMQ_PASSWORD}
+  jms:
+    pub-sub-domain: false
+
+activemq:
+  destination:
+    trainer-workload: trainer-workload-queue
 
 logging:
   pattern:
@@ -21,11 +31,6 @@ springdoc:
     path: /swagger-ui/index.html
   api-docs:
     enabled: true
-
-jwt:
-  secret: ${JWT_SECRET}
-  expiration: 3600000
-  service-expiration: 300000
 
 management:
   endpoints:

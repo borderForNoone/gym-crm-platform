@@ -1,15 +1,10 @@
 package com.gym.crm.workload.controller;
 
 import com.gym.crm.workload.service.TrainerWorkloadService;
-import com.gym.crm.workload.service.TrainerWorkloadServiceImpl;
-import gym.crm.platform.workload.openapi.TrainerWorkloadRequest;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,13 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class TrainerWorkloadController {
     private final TrainerWorkloadService service;
-
-    @PutMapping
-    public ResponseEntity<Void> updateTrainerWorkload(@Valid @RequestBody TrainerWorkloadRequest request) {
-        service.updateTrainerWorkload(request);
-
-        return ResponseEntity.ok().build();
-    }
 
     @GetMapping("/{username}")
     public ResponseEntity<Integer> getTrainerMonthlyWorkload(@PathVariable String username, @RequestParam int year, @RequestParam int month) {

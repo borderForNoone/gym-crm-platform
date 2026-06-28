@@ -11,18 +11,21 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Component
 @RequiredArgsConstructor
 public class WorkloadUpdateListener {
-    private final WorkloadServiceClient service;
+    private final WorkloadEventPublisher workloadEventPublisher;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handle(WorkloadUpdateEvent event) {
-        event.requests().forEach(this::updateTrainerWorkload);
+    public void onWorkloadUpdate(WorkloadUpdateEvent event) {
+        for (TrainerWorkloadRequest request : event.requests()) {
+            publishSafely(request);
+        }
     }
 
-    private void updateTrainerWorkload(TrainerWorkloadRequest request) {
+    private void publishSafely(TrainerWorkloadRequest request) {
         try {
-            service.updateTrainerWorkload(request);
-        } catch (Exception ex) {
-            log.error("Failed to update trainer workload for username={}", request.getTrainerUsername(), ex);
+            workloadEventPublisher.publish(request);
+        } catch (Exception exception) {
+            log.error("Failed to publish workload event for trainer={}, action={}, message={}",
+                    request.getTrainerUsername(), request.getActionType(), exception.getMessage());
         }
     }
 }
