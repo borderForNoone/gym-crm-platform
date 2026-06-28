@@ -1,48 +1,117 @@
 package com.gym.crm.core.client.workload;
 
+import com.gym.crm.core.client.workload.model.ActionType;
 import com.gym.crm.core.client.workload.model.TrainerWorkloadRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class WorkloadUpdateListenerTest {
-
     private static final String FIRST_USERNAME = "billy.herrington";
     private static final String SECOND_USERNAME = "ricardo.milos";
 
     @Mock
-    private WorkloadServiceClient clientService;
+    private WorkloadEventPublisher workloadEventPublisher;
 
-    @InjectMocks
-    private WorkloadUpdateListener listener;
-
-    @Test
-    void handle_shouldSendAllRequestsToWorkloadClient() {
-        TrainerWorkloadRequest first = new TrainerWorkloadRequest().trainerUsername(FIRST_USERNAME);
-        TrainerWorkloadRequest second = new TrainerWorkloadRequest().trainerUsername(SECOND_USERNAME);
-
-        listener.handle(new WorkloadUpdateEvent(List.of(first, second)));
-
-        verify(clientService).updateTrainerWorkload(first);
-        verify(clientService).updateTrainerWorkload(second);
+    private WorkloadUpdateListener listener() {
+        return new WorkloadUpdateListener(workloadEventPublisher);
     }
 
     @Test
-    void handle_whenClientFails_shouldNotThrow() {
-        TrainerWorkloadRequest request = new TrainerWorkloadRequest().trainerUsername(FIRST_USERNAME);
+    void onWorkloadUpdate_shouldPublishEachRequest_whenEventHasMultipleRequests() {
+        WorkloadUpdateListener listener = listener();
+        TrainerWorkloadRequest first = buildRequest(FIRST_USERNAME);
+        TrainerWorkloadRequest second = buildRequest(SECOND_USERNAME);
+        WorkloadUpdateEvent event = new WorkloadUpdateEvent(List.of(first, second));
 
-        doThrow(new RuntimeException("workload unavailable")).when(clientService).updateTrainerWorkload(request);
+        listener.onWorkloadUpdate(event);
 
-        assertDoesNotThrow(() -> listener.handle(new WorkloadUpdateEvent(List.of(request))));
-        verify(clientService).updateTrainerWorkload(request);
+        verify(workloadEventPublisher).publish(first);
+        verify(workloadEventPublisher).publish(second);
+    }
+
+    @Test
+    void onWorkloadUpdate_shouldPublishRequestsInOrder() {
+        WorkloadUpdateListener listener = listener();
+        TrainerWorkloadRequest first = buildRequest(FIRST_USERNAME);
+        TrainerWorkloadRequest second = buildRequest(SECOND_USERNAME);
+        WorkloadUpdateEvent event = new WorkloadUpdateEvent(List.of(first, second));
+
+        listener.onWorkloadUpdate(event);
+
+        InOrder inOrder = inOrder(workloadEventPublisher);
+        inOrder.verify(workloadEventPublisher).publish(first);
+        inOrder.verify(workloadEventPublisher).publish(second);
+    }
+
+    @Test
+    void onWorkloadUpdate_shouldDoNothing_whenEventHasNoRequests() {
+        WorkloadUpdateListener listener = listener();
+        WorkloadUpdateEvent event = new WorkloadUpdateEvent(List.of());
+
+        listener.onWorkloadUpdate(event);
+
+        verifyNoInteractions(workloadEventPublisher);
+    }
+
+    @Test
+    void onWorkloadUpdate_shouldContinuePublishingRemainingRequests_whenOnePublishFails() {
+        WorkloadUpdateListener listener = listener();
+        TrainerWorkloadRequest failing = buildRequest(FIRST_USERNAME);
+        TrainerWorkloadRequest succeeding = buildRequest(SECOND_USERNAME);
+        WorkloadUpdateEvent event = new WorkloadUpdateEvent(List.of(failing, succeeding));
+        doThrow(new RuntimeException("broker unavailable")).when(workloadEventPublisher).publish(failing);
+
+        listener.onWorkloadUpdate(event);
+
+        verify(workloadEventPublisher).publish(failing);
+        verify(workloadEventPublisher).publish(succeeding);
+    }
+
+    @Test
+    void onWorkloadUpdate_shouldNotPropagateException_whenPublishFailsForEveryRequest() {
+        WorkloadUpdateListener listener = listener();
+        TrainerWorkloadRequest request = buildRequest(FIRST_USERNAME);
+        WorkloadUpdateEvent event = new WorkloadUpdateEvent(List.of(request));
+        doThrow(new RuntimeException("broker unavailable")).when(workloadEventPublisher).publish(any());
+
+        listener.onWorkloadUpdate(event);
+
+        verify(workloadEventPublisher, times(1)).publish(request);
+    }
+
+    @Test
+    void onWorkloadUpdate_shouldNotPublishAnything_whenPublisherIsNeverInvokedForEmptyEvent() {
+        WorkloadUpdateListener listener = listener();
+        WorkloadUpdateEvent event = new WorkloadUpdateEvent(List.of());
+
+        listener.onWorkloadUpdate(event);
+
+        verify(workloadEventPublisher, never()).publish(any());
+    }
+
+    private TrainerWorkloadRequest buildRequest(String username) {
+        return new TrainerWorkloadRequest(username,
+                "Billy",
+                "Herrington",
+                true,
+                LocalDate.of(2026, Month.JUNE, 10),
+                60,
+                ActionType.ADD);
     }
 }

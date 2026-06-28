@@ -13,6 +13,7 @@ Java 21
 Maven
 PostgreSQL
 Redis
+ActiveMQ
 ```
 
 ## 2. Clone the project
@@ -62,6 +63,20 @@ After startup, the application will be available at:
 
 ```text
 http://localhost:8080/gym-crm-application
+```
+
+## 6.1 Messaging (ActiveMQ)
+
+Communication between `gym-core-service` and `workload-service` is asynchronous, via ActiveMQ.
+
+For the `local` profile, broker connection details are hardcoded (`tcp://localhost:61616`, user/password `admin`/`admin`) — just make sure a local ActiveMQ instance is running before starting the application.
+
+For all other profiles (`dev`, `stg`, `prod`), the broker connection is read from environment variables and must be provided explicitly:
+
+```text
+ACTIVEMQ_BROKER_URL
+ACTIVEMQ_USER
+ACTIVEMQ_PASSWORD
 ```
 
 

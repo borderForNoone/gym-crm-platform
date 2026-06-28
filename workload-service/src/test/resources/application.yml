@@ -1,9 +1,19 @@
 api:
   base-path: /api/v1
 
-jwt:
-  secret: dGVzdC1zZWNyZXQta2V5LW11c3QtYmUtbG9uZy1lbm91Z2gtZm9yLWhtYWMtc2hhMjU2
-
 eureka:
   client:
     enabled: false
+
+spring:
+  activemq:
+    broker-url: vm://localhost?broker.persistent=false
+    user: admin
+    password: admin
+
+activemq:
+  destination:
+    trainer-workload: trainer-workload-queue
+    trainer-workload-dlq: trainer-workload-dlq
+  redelivery:
+    max-redeliveries: 3
