@@ -16,8 +16,11 @@ import org.slf4j.MDC;
 import java.time.LocalDate;
 import java.time.Month;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,13 +28,12 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class TrainerWorkloadMessageListenerTest {
     private static final String TRANSACTION_ID_PROPERTY = "transactionId";
-    private static final String MDC_TRANSACTION_ID_KEY = "transactionId";
     private static final String USERNAME = "billy.herrington";
-    private static final String FIRST_NAME = "Billy";
-    private static final String LAST_NAME = "Herrington";
 
     @Mock
     private TrainerWorkloadService trainerWorkloadService;
+    @Mock
+    private DeadLetterPublisher deadLetterPublisher;
     @Mock
     private Message message;
 
@@ -39,7 +41,7 @@ class TrainerWorkloadMessageListenerTest {
 
     @BeforeEach
     void setUp() {
-        listener = new TrainerWorkloadMessageListener(trainerWorkloadService);
+        listener = new TrainerWorkloadMessageListener(trainerWorkloadService, deadLetterPublisher);
     }
 
     @AfterEach
@@ -49,95 +51,86 @@ class TrainerWorkloadMessageListenerTest {
 
     @Test
     void onMessage_shouldCallService_whenRequestIsValid() throws JMSException {
-        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
         TrainerWorkloadRequest request = buildRequest();
+        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
 
         listener.onMessage(request, message);
 
         verify(trainerWorkloadService).updateTrainerWorkload(request);
+        verify(deadLetterPublisher, never()).send(any(), anyString(), anyString());
     }
 
     @Test
-    void onMessage_shouldClearMdc_afterProcessing() throws JMSException {
+    void onMessage_shouldRouteToDeadLetter_whenTrainerUsernameIsNull() throws JMSException {
+        TrainerWorkloadRequest request = buildRequest().trainerUsername(null);
         when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
-        TrainerWorkloadRequest request = buildRequest();
 
         listener.onMessage(request, message);
 
-        String actual = MDC.get(MDC_TRANSACTION_ID_KEY);
-        assertThat(actual).isNull();
+        verify(deadLetterPublisher).send(request, "trainerUsername is required", "tx-123");
+        verify(trainerWorkloadService, never()).updateTrainerWorkload(request);
     }
 
     @Test
-    void onMessage_shouldClearMdc_evenWhenValidationFails() throws JMSException {
+    void onMessage_shouldRouteToDeadLetter_whenTrainerUsernameIsBlank() throws JMSException {
+        TrainerWorkloadRequest request = buildRequest().trainerUsername("   ");
         when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
-        TrainerWorkloadRequest invalidRequest = buildRequest().trainerUsername(null);
-        String actualTransactionId = MDC.get(MDC_TRANSACTION_ID_KEY);
-
-        Throwable actual = catchThrowable(() -> listener.onMessage(invalidRequest, message));
-
-        assertThat(actual).isInstanceOf(IllegalArgumentException.class);
-        assertThat(actualTransactionId).isNull();
-    }
-
-    @Test
-    void onMessage_shouldUseNullTransactionId_whenHeaderExtractionThrows() throws JMSException {
-        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenThrow(new JMSException("broker error"));
-        TrainerWorkloadRequest request = buildRequest();
 
         listener.onMessage(request, message);
 
-        verify(trainerWorkloadService).updateTrainerWorkload(request);
+        verify(deadLetterPublisher).send(request, "trainerUsername is required", "tx-123");
+        verify(trainerWorkloadService, never()).updateTrainerWorkload(request);
     }
 
     @Test
-    void onMessage_shouldThrowIllegalArgumentException_whenTrainerUsernameIsNull() throws JMSException {
+    void onMessage_shouldRouteToDeadLetter_whenTrainingDateIsNull() throws JMSException {
+        TrainerWorkloadRequest request = buildRequest().trainingDate(null);
         when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
+
+        listener.onMessage(request, message);
+
+        verify(deadLetterPublisher).send(request, "trainingDate is required", "tx-123");
+        verify(trainerWorkloadService, never()).updateTrainerWorkload(request);
+    }
+
+    @Test
+    void onMessage_shouldRouteToDeadLetter_whenActionTypeIsNull() throws JMSException {
+        TrainerWorkloadRequest request = buildRequest().actionType(null);
+        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
+
+        listener.onMessage(request, message);
+
+        verify(deadLetterPublisher).send(request, "actionType is required", "tx-123");
+        verify(trainerWorkloadService, never()).updateTrainerWorkload(request);
+    }
+
+    @Test
+    void onMessage_shouldNotThrow_whenRoutingToDeadLetter() throws JMSException {
         TrainerWorkloadRequest request = buildRequest().trainerUsername(null);
 
-        Throwable actual = catchThrowable(() -> listener.onMessage(request, message));
+        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
 
-        assertThat(actual).isInstanceOf(IllegalArgumentException.class).hasMessage("trainerUsername is required");
-        verify(trainerWorkloadService, never()).updateTrainerWorkload(request);
+        assertThatNoException().isThrownBy(() -> listener.onMessage(request, message));
     }
 
     @Test
-    void onMessage_shouldThrowIllegalArgumentException_whenTrainerUsernameIsBlank() throws JMSException {
+    void onMessage_shouldPropagateException_whenServiceCallFailsForOtherReasons() throws JMSException {
+        TrainerWorkloadRequest request = buildRequest();
+
         when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
-        TrainerWorkloadRequest request = buildRequest().trainerUsername("   ");
+        doThrow(new RuntimeException("database unavailable")).when(trainerWorkloadService).updateTrainerWorkload(request);
 
-        Throwable actual = catchThrowable(() -> listener.onMessage(request, message));
-
-        assertThat(actual).isInstanceOf(IllegalArgumentException.class).hasMessage("trainerUsername is required");
-    }
-
-    @Test
-    void onMessage_shouldThrowIllegalArgumentException_whenTrainingDateIsNull() throws JMSException {
-        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
-        TrainerWorkloadRequest request = buildRequest().trainingDate(null);
-
-        Throwable actual = catchThrowable(() -> listener.onMessage(request, message));
-
-        assertThat(actual).isInstanceOf(IllegalArgumentException.class).hasMessage("trainingDate is required");
-        verify(trainerWorkloadService, never()).updateTrainerWorkload(request);
-    }
-
-    @Test
-    void onMessage_shouldThrowIllegalArgumentException_whenActionTypeIsNull() throws JMSException {
-        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
-        TrainerWorkloadRequest request = buildRequest().actionType(null);
-
-        Throwable actual = catchThrowable(() -> listener.onMessage(request, message));
-
-        assertThat(actual).isInstanceOf(IllegalArgumentException.class).hasMessage("actionType is required");
-        verify(trainerWorkloadService, never()).updateTrainerWorkload(request);
+        assertThatThrownBy(() -> listener.onMessage(request, message))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("database unavailable");
+        verify(deadLetterPublisher, never()).send(any(), anyString(), anyString());
     }
 
     private TrainerWorkloadRequest buildRequest() {
         return new TrainerWorkloadRequest()
                 .trainerUsername(USERNAME)
-                .trainerFirstName(FIRST_NAME)
-                .trainerLastName(LAST_NAME)
+                .trainerFirstName("Billy")
+                .trainerLastName("Herrington")
                 .isActive(true)
                 .trainingDate(LocalDate.of(2026, Month.JUNE, 10))
                 .trainingDuration(60)

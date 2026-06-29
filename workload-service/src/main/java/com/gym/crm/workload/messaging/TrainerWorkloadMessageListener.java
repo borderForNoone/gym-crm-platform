@@ -18,6 +18,7 @@ public class TrainerWorkloadMessageListener {
     private static final String MDC_TRANSACTION_ID_KEY = "transactionId";
 
     private final TrainerWorkloadService trainerWorkloadService;
+    private final DeadLetterPublisher deadLetterPublisher;
 
     @JmsListener(destination = "${activemq.destination.trainer-workload}")
     public void onMessage(TrainerWorkloadRequest request, Message message) {
@@ -25,16 +26,23 @@ public class TrainerWorkloadMessageListener {
         MDC.put(MDC_TRANSACTION_ID_KEY, transactionId);
 
         try {
-            log.info("Received workload event trainer={} action={} txId={}",
-                    request.getTrainerUsername(), request.getActionType(), transactionId);
-
-            validate(request);
-            trainerWorkloadService.updateTrainerWorkload(request);
-
-            log.info("Workload event processed successfully trainer={} txId={}", request.getTrainerUsername(), transactionId);
+            log.info("Received workload event trainer={} action={} txId={}", request.getTrainerUsername(), request.getActionType(), transactionId);
+            validateOrSendToDeadLetter(request, transactionId);
         } finally {
             MDC.remove(MDC_TRANSACTION_ID_KEY);
         }
+    }
+
+    private void validateOrSendToDeadLetter(TrainerWorkloadRequest request, String transactionId) {
+        try {
+            validate(request);
+        } catch (IllegalArgumentException invalidMessage) {
+            deadLetterPublisher.send(request, invalidMessage.getMessage(), transactionId);
+            return;
+        }
+
+        trainerWorkloadService.updateTrainerWorkload(request);
+        log.info("Workload event processed successfully trainer={} txId={}", request.getTrainerUsername(), transactionId);
     }
 
     private void validate(TrainerWorkloadRequest request) {
@@ -61,7 +69,6 @@ public class TrainerWorkloadMessageListener {
             return message.getStringProperty(TRANSACTION_ID_PROPERTY);
         } catch (JMSException exception) {
             log.warn("Could not extract transactionId from message: {}", exception.getMessage());
-
             return null;
         }
     }
