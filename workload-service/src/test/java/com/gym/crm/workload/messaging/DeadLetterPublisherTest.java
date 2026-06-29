@@ -53,15 +53,13 @@ class DeadLetterPublisherTest {
     @Test
     void send_shouldSetFailureReasonAndOriginalDestinationProperties() throws JMSException {
         TrainerWorkloadRequest request = buildRequest();
+        Message message = mock(Message.class);
+        ArgumentCaptor<MessagePostProcessor> captor = ArgumentCaptor.forClass(MessagePostProcessor.class);
 
         publisher.send(request, REASON, TRANSACTION_ID);
 
-        ArgumentCaptor<MessagePostProcessor> captor = ArgumentCaptor.forClass(MessagePostProcessor.class);
         verify(jmsTemplate).convertAndSend(eq(DLQ_DESTINATION), eq(request), captor.capture());
-
-        Message message = mock(Message.class);
         captor.getValue().postProcessMessage(message);
-
         verify(message).setStringProperty("failureReason", REASON);
         verify(message).setStringProperty("originalDestination", SOURCE_DESTINATION);
         verify(message).setStringProperty("transactionId", TRANSACTION_ID);
@@ -70,15 +68,13 @@ class DeadLetterPublisherTest {
     @Test
     void send_shouldNotSetTransactionIdProperty_whenTransactionIdIsNull() throws JMSException {
         TrainerWorkloadRequest request = buildRequest();
+        ArgumentCaptor<MessagePostProcessor> captor = ArgumentCaptor.forClass(MessagePostProcessor.class);
+        Message message = mock(Message.class);
 
         publisher.send(request, REASON, null);
 
-        ArgumentCaptor<MessagePostProcessor> captor = ArgumentCaptor.forClass(MessagePostProcessor.class);
         verify(jmsTemplate).convertAndSend(eq(DLQ_DESTINATION), eq(request), captor.capture());
-
-        Message message = mock(Message.class);
         captor.getValue().postProcessMessage(message);
-
         verify(message, never()).setStringProperty(eq("transactionId"), anyString());
     }
 
