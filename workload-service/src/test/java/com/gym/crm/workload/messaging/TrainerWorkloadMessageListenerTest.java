@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.MDC;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.Month;
 
@@ -35,13 +36,19 @@ class TrainerWorkloadMessageListenerTest {
     @Mock
     private DeadLetterPublisher deadLetterPublisher;
     @Mock
+    private Clock clock;
+    @Mock
     private Message message;
 
     private TrainerWorkloadMessageListener listener;
 
     @BeforeEach
     void setUp() {
-        listener = new TrainerWorkloadMessageListener(trainerWorkloadService, deadLetterPublisher);
+        listener = new TrainerWorkloadMessageListener(
+                trainerWorkloadService,
+                deadLetterPublisher,
+                clock
+        );
     }
 
     @AfterEach
@@ -122,7 +129,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(eq(request), eq("tx-123"), eq("Failed to update trainer workload"));
+        verify(deadLetterPublisher).send(request, "tx-123", "Failed to update trainer workload");
         verify(trainerWorkloadService).updateTrainerWorkload(request);
     }
 
@@ -131,11 +138,18 @@ class TrainerWorkloadMessageListenerTest {
         TrainerWorkloadRequest request = buildRequest();
 
         when(message.getStringProperty("transactionId")).thenReturn("tx-123");
-        doThrow(new RuntimeException("database unavailable")).when(trainerWorkloadService).updateTrainerWorkload(request);
+        doThrow(new RuntimeException("database unavailable"))
+                .when(trainerWorkloadService)
+                .updateTrainerWorkload(request);
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(eq(request), eq("tx-123"), eq("Failed to update trainer workload"));
+        verify(deadLetterPublisher).send(
+                request,
+                "tx-123",
+                "Failed to update trainer workload"
+        );
+
         verify(trainerWorkloadService).updateTrainerWorkload(request);
     }
 

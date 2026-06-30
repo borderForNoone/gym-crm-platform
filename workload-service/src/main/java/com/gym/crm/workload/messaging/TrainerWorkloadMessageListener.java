@@ -12,6 +12,7 @@ import org.slf4j.MDC;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.LocalDate;
 
 @Slf4j
@@ -23,9 +24,11 @@ public class TrainerWorkloadMessageListener {
 
     private final TrainerWorkloadService trainerWorkloadService;
     private final DeadLetterPublisher deadLetterPublisher;
+    private final Clock clock;
 
     @JmsListener(destination = "${activemq.destination.trainer-workload}")
     public void onMessage(TrainerWorkloadRequest request, Message message) {
+
         String transactionId = extractTransactionId(message);
         MDC.put(MDC_TRANSACTION_ID_KEY, transactionId);
 
@@ -65,13 +68,17 @@ public class TrainerWorkloadMessageListener {
             throw new InvalidWorkloadMessageException("Request is null");
         }
 
-        if (request.getTrainerUsername() == null || request.getTrainerUsername().isBlank()) {
+        String username = request.getTrainerUsername();
+        if (username == null || username.isBlank()) {
             throw new InvalidWorkloadMessageException("trainerUsername is required");
         }
 
         LocalDate trainingDate = request.getTrainingDate();
+        if (trainingDate == null) {
+            throw new InvalidWorkloadMessageException("trainingDate is required");
+        }
 
-        if (trainingDate.isAfter(LocalDate.now())) {
+        if (trainingDate.isAfter(LocalDate.now(clock))) {
             throw new InvalidWorkloadMessageException("trainingDate cannot be in the future");
         }
     }
