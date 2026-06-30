@@ -39,10 +39,9 @@ public class TrainerWorkloadMessageListener {
             validate(request);
             process(request, transactionId);
 
-        } catch (InvalidWorkloadMessageException e) {
+        } catch (InvalidWorkloadMessageException | WorkloadMessageProcessingException e) {
             handleToDlq(request, transactionId, e.getMessage());
-        } catch (WorkloadMessageProcessingException e) {
-            handleToDlq(request, transactionId, e.getMessage());
+
         } catch (Exception e) {
             log.error("Unexpected error while processing workload message", e);
             handleToDlq(request, transactionId, "Unexpected error: " + e.getMessage());
