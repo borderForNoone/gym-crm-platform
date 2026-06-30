@@ -78,9 +78,6 @@ public class TrainerWorkloadMessageListener {
         if (request.getTrainerUsername() == null || request.getTrainerUsername().isBlank()) {
             throw new InvalidWorkloadMessageException("trainerUsername is required");
         }
-        if (request.getActionType() == null) {
-            throw new InvalidWorkloadMessageException("actionType is required");
-        }
 
         LocalDate trainingDate = request.getTrainingDate();
         if (trainingDate == null) {

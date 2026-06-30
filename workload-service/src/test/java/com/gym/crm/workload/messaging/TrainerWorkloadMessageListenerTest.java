@@ -93,13 +93,14 @@ class TrainerWorkloadMessageListenerTest {
     }
 
     @Test
-    void onMessage_shouldRouteToDeadLetter_whenActionTypeIsNull() throws JMSException {
+    void onMessage_shouldProcessMessage_whenActionTypeIsNull() throws JMSException {
         TrainerWorkloadRequest request = buildRequest().actionType(null);
         when(message.getStringProperty("transactionId")).thenReturn("tx-123");
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(eq(request), eq("tx-123"), anyString());
+        verify(trainerWorkloadService).updateTrainerWorkload(request);
+        verify(deadLetterPublisher, never()).send(any(), anyString(), anyString());
     }
 
     @Test
