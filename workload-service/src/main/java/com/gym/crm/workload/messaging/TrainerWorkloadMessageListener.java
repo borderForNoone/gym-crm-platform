@@ -41,14 +41,11 @@ public class TrainerWorkloadMessageListener {
 
         } catch (InvalidWorkloadMessageException e) {
             handleToDlq(request, transactionId, e.getMessage());
-
         } catch (WorkloadMessageProcessingException e) {
             handleToDlq(request, transactionId, e.getMessage());
-
         } catch (Exception e) {
             log.error("Unexpected error while processing workload message", e);
             handleToDlq(request, transactionId, "Unexpected error: " + e.getMessage());
-
         } finally {
             MDC.remove(MDC_TRANSACTION_ID_KEY);
         }
@@ -58,16 +55,9 @@ public class TrainerWorkloadMessageListener {
         try {
             trainerWorkloadService.updateTrainerWorkload(request);
 
-            log.info("Workload processed successfully trainer={} txId={}",
-                    request.getTrainerUsername(),
-                    transactionId
-            );
-
+            log.info("Workload processed successfully trainer={} txId={}", request.getTrainerUsername(), transactionId);
         } catch (Exception e) {
-            throw new WorkloadMessageProcessingException(
-                    "Failed to update trainer workload",
-                    e
-            );
+            throw new WorkloadMessageProcessingException("Failed to update trainer workload", e);
         }
     }
 
