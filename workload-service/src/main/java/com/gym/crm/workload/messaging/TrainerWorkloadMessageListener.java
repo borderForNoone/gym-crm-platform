@@ -1,5 +1,7 @@
 package com.gym.crm.workload.messaging;
 
+import com.gym.crm.workload.exception.InvalidWorkloadMessageException;
+import com.gym.crm.workload.exception.WorkloadMessageProcessingException;
 import com.gym.crm.workload.service.TrainerWorkloadService;
 import gym.crm.platform.workload.openapi.TrainerWorkloadRequest;
 import jakarta.jms.JMSException;
@@ -10,6 +12,10 @@ import org.slf4j.MDC;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
+import java.time.LocalDate;
+import java.util.Objects;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -19,6 +25,7 @@ public class TrainerWorkloadMessageListener {
 
     private final TrainerWorkloadService trainerWorkloadService;
     private final DeadLetterPublisher deadLetterPublisher;
+    private final Clock clock;
 
     @JmsListener(destination = "${activemq.destination.trainer-workload}")
     public void onMessage(TrainerWorkloadRequest request, Message message) {
@@ -26,50 +33,60 @@ public class TrainerWorkloadMessageListener {
         MDC.put(MDC_TRANSACTION_ID_KEY, transactionId);
 
         try {
-            log.info("Received workload event trainer={} action={} txId={}", request.getTrainerUsername(), request.getActionType(), transactionId);
-            validateOrSendToDeadLetter(request, transactionId);
+            log.info("Received workload event trainer={} action={} txId={}", request != null ? request.getTrainerUsername() : null,
+                    request != null ? request.getActionType() : null,
+                    transactionId
+            );
+            validate(request);
+            process(request, transactionId);
+        } catch (InvalidWorkloadMessageException | WorkloadMessageProcessingException e) {
+            handleToDlq(request, transactionId, e.getMessage());
+        } catch (Exception e) {
+            log.error("Unexpected error while processing workload message", e);
+            handleToDlq(request, transactionId, "Unexpected error: " + e.getMessage());
         } finally {
             MDC.remove(MDC_TRANSACTION_ID_KEY);
         }
     }
 
-    private void validateOrSendToDeadLetter(TrainerWorkloadRequest request, String transactionId) {
+    private void process(TrainerWorkloadRequest request, String transactionId) {
         try {
-            validate(request);
-        } catch (IllegalArgumentException invalidMessage) {
-            deadLetterPublisher.send(request, invalidMessage.getMessage(), transactionId);
-            return;
+            trainerWorkloadService.updateTrainerWorkload(request);
+            log.info("Workload processed successfully trainer={} txId={}", request.getTrainerUsername(), transactionId);
+        } catch (Exception e) {
+            throw new WorkloadMessageProcessingException("Failed to update trainer workload", e);
         }
-
-        trainerWorkloadService.updateTrainerWorkload(request);
-        log.info("Workload event processed successfully trainer={} txId={}", request.getTrainerUsername(), transactionId);
     }
 
     private void validate(TrainerWorkloadRequest request) {
-        requireNotNull(request.getTrainerUsername(), "trainerUsername is required");
-        requireNotBlank(request.getTrainerUsername(), "trainerUsername is required");
-        requireNotNull(request.getTrainingDate(), "trainingDate is required");
-        requireNotNull(request.getActionType(), "actionType is required");
-    }
-
-    private void requireNotNull(Object value, String message) {
-        if (value == null) {
-            throw new IllegalArgumentException(message);
+        if (request == null) {
+            throw new InvalidWorkloadMessageException("Request is null");
         }
-    }
 
-    private void requireNotBlank(String value, String message) {
-        if (value.isBlank()) {
-            throw new IllegalArgumentException(message);
+        String username = request.getTrainerUsername();
+        Objects.requireNonNull(username, "trainerUsername is required");
+        if (username.isBlank()) {
+            throw new InvalidWorkloadMessageException("trainerUsername cannot be blank");
+        }
+
+        LocalDate trainingDate = request.getTrainingDate();
+        Objects.requireNonNull(trainingDate, "trainingDate is required");
+        if (trainingDate.isAfter(LocalDate.now(clock))) {
+            throw new InvalidWorkloadMessageException("trainingDate cannot be in the future");
         }
     }
 
     private String extractTransactionId(Message message) {
         try {
             return message.getStringProperty(TRANSACTION_ID_PROPERTY);
-        } catch (JMSException exception) {
-            log.warn("Could not extract transactionId from message: {}", exception.getMessage());
-            return null;
+        } catch (JMSException e) {
+            log.warn("Cannot extract transactionId from JMS message");
+            return "no-txn";
         }
+    }
+
+    private void handleToDlq(TrainerWorkloadRequest request, String transactionId, String reason) {
+        log.warn("Sending message to DLQ txId={} reason={}", transactionId, reason);
+        deadLetterPublisher.send(request, transactionId, reason);
     }
 }
