@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Slf4j
 @Component
@@ -67,13 +68,17 @@ public class TrainerWorkloadMessageListener {
         if (request == null) {
             throw new InvalidWorkloadMessageException("Request is null");
         }
+
         String username = request.getTrainerUsername();
-        if (username == null || username.isBlank()) {
-            throw new InvalidWorkloadMessageException("trainerUsername is required");
+        Objects.requireNonNull(username, "trainerUsername is required");
+        if (username.isBlank()) {
+            throw new InvalidWorkloadMessageException("trainerUsername cannot be blank");
         }
+
         LocalDate trainingDate = request.getTrainingDate();
-        if (trainingDate == null || trainingDate.isAfter(LocalDate.now(clock))) {
-            throw new InvalidWorkloadMessageException("trainingDate is required and cannot be in the future");
+        Objects.requireNonNull(trainingDate, "trainingDate is required");
+        if (trainingDate.isAfter(LocalDate.now(clock))) {
+            throw new InvalidWorkloadMessageException("trainingDate cannot be in the future");
         }
     }
 

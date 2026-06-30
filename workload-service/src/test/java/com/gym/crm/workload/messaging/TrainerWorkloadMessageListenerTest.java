@@ -74,7 +74,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(request, "tx-123", "trainerUsername is required");
+        verify(deadLetterPublisher).send(request, "tx-123", "Unexpected error: trainerUsername is required");
         verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
     }
 
@@ -85,7 +85,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(request, "tx-123", "trainerUsername is required");
+        verify(deadLetterPublisher).send(request, "tx-123", "trainerUsername cannot be blank");
         verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
     }
 
