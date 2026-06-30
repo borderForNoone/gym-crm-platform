@@ -12,6 +12,8 @@ import org.slf4j.MDC;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -78,8 +80,14 @@ public class TrainerWorkloadMessageListener {
             throw new InvalidWorkloadMessageException("trainerUsername is required");
         }
 
-        if (request.getTrainingDate() == null) {
+        LocalDate trainingDate = request.getTrainingDate();
+
+        if (trainingDate == null) {
             throw new InvalidWorkloadMessageException("trainingDate is required");
+        }
+
+        if (trainingDate.isAfter(LocalDate.now())) {
+            throw new InvalidWorkloadMessageException("trainingDate cannot be in the future");
         }
 
         if (request.getActionType() == null) {

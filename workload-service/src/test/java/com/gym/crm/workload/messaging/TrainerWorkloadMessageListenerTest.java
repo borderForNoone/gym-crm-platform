@@ -137,6 +137,40 @@ class TrainerWorkloadMessageListenerTest {
         verify(trainerWorkloadService).updateTrainerWorkload(request);
     }
 
+    @Test
+    void onMessage_shouldSendToDlq_whenUnexpectedErrorOccurs() throws JMSException {
+        TrainerWorkloadRequest request = buildRequest();
+
+        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-999");
+        doThrow(new RuntimeException("unexpected crash")).when(trainerWorkloadService).updateTrainerWorkload(request);
+
+        listener.onMessage(request, message);
+
+        verify(deadLetterPublisher).send(eq(request), eq("tx-999"), anyString());
+    }
+
+    @Test
+    void onMessage_shouldRouteToDlq_whenRequestIsNull() throws JMSException {
+        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-null");
+
+        listener.onMessage(null, message);
+
+        verify(deadLetterPublisher).send(eq(null), eq("tx-null"), eq("Request is null"));
+        verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
+    }
+
+    @Test
+    void onMessage_shouldUseNoTxn_whenJmsExceptionThrown() throws JMSException {
+        TrainerWorkloadRequest request = buildRequest();
+
+        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenThrow(new JMSException("boom"));
+
+        listener.onMessage(request, message);
+
+        verify(trainerWorkloadService).updateTrainerWorkload(request);
+        verify(deadLetterPublisher, never()).send(any(), anyString(), anyString());
+    }
+
     private TrainerWorkloadRequest buildRequest() {
         return new TrainerWorkloadRequest()
                 .trainerUsername(USERNAME)
