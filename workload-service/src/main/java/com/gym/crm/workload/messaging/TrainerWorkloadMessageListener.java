@@ -29,12 +29,12 @@ public class TrainerWorkloadMessageListener {
 
         try {
             log.info("Received workload event trainer={} action={} txId={}",
-                    request.getTrainerUsername(),
-                    request.getActionType(),
-                    transactionId);
+                    request != null ? request.getTrainerUsername() : null,
+                    request != null ? request.getActionType() : null,
+                    transactionId
+            );
 
             validate(request);
-
             process(request, transactionId);
 
         } catch (InvalidWorkloadMessageException e) {
@@ -58,7 +58,8 @@ public class TrainerWorkloadMessageListener {
 
             log.info("Workload processed successfully trainer={} txId={}",
                     request.getTrainerUsername(),
-                    transactionId);
+                    transactionId
+            );
 
         } catch (Exception e) {
             throw new WorkloadMessageProcessingException(
@@ -86,24 +87,18 @@ public class TrainerWorkloadMessageListener {
         }
     }
 
-    private void handleToDlq(TrainerWorkloadRequest request,
-                             String transactionId,
-                             String reason) {
-
-        log.error("Sending message to DLQ. trainer={} reason={} txId={}",
-                request.getTrainerUsername(),
-                reason,
-                transactionId);
-
-        deadLetterPublisher.send(request, reason, transactionId);
-    }
-
     private String extractTransactionId(Message message) {
         try {
             return message.getStringProperty(TRANSACTION_ID_PROPERTY);
         } catch (JMSException e) {
-            log.warn("Could not extract transactionId: {}", e.getMessage());
-            return null;
+            log.warn("Cannot extract transactionId from JMS message");
+            return "no-txn";
         }
+    }
+
+    private void handleToDlq(TrainerWorkloadRequest request, String transactionId, String reason) {
+        log.warn("Sending message to DLQ txId={} reason={}", transactionId, reason);
+
+        deadLetterPublisher.send(request, transactionId, reason);
     }
 }
