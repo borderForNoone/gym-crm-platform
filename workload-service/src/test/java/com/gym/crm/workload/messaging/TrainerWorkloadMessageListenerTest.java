@@ -165,7 +165,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(null, message);
 
-        verify(deadLetterPublisher).send(eq(null), eq("tx-null"), eq("Request is null"));
+        verify(deadLetterPublisher).send(null, "tx-null", "Request is null");
         verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
     }
 

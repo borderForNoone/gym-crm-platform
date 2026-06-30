@@ -29,23 +29,18 @@ public class TrainerWorkloadMessageListener {
 
     @JmsListener(destination = "${activemq.destination.trainer-workload}")
     public void onMessage(TrainerWorkloadRequest request, Message message) {
-
         String transactionId = extractTransactionId(message);
         MDC.put(MDC_TRANSACTION_ID_KEY, transactionId);
 
         try {
-            log.info("Received workload event trainer={} action={} txId={}",
-                    request != null ? request.getTrainerUsername() : null,
+            log.info("Received workload event trainer={} action={} txId={}", request != null ? request.getTrainerUsername() : null,
                     request != null ? request.getActionType() : null,
                     transactionId
             );
-
             validate(request);
             process(request, transactionId);
-
         } catch (InvalidWorkloadMessageException | WorkloadMessageProcessingException e) {
             handleToDlq(request, transactionId, e.getMessage());
-
         } catch (Exception e) {
             log.error("Unexpected error while processing workload message", e);
             handleToDlq(request, transactionId, "Unexpected error: " + e.getMessage());
@@ -57,7 +52,6 @@ public class TrainerWorkloadMessageListener {
     private void process(TrainerWorkloadRequest request, String transactionId) {
         try {
             trainerWorkloadService.updateTrainerWorkload(request);
-
             log.info("Workload processed successfully trainer={} txId={}", request.getTrainerUsername(), transactionId);
         } catch (Exception e) {
             throw new WorkloadMessageProcessingException("Failed to update trainer workload", e);
