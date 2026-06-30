@@ -81,9 +81,6 @@ public class TrainerWorkloadMessageListener {
         }
 
         LocalDate trainingDate = request.getTrainingDate();
-        if (trainingDate == null) {
-            throw new InvalidWorkloadMessageException("trainingDate is required");
-        }
 
         if (trainingDate.isAfter(LocalDate.now())) {
             throw new InvalidWorkloadMessageException("trainingDate cannot be in the future");
