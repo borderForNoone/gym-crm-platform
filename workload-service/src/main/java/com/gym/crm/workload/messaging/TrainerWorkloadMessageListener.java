@@ -75,27 +75,16 @@ public class TrainerWorkloadMessageListener {
         if (request == null) {
             throw new InvalidWorkloadMessageException("Request is null");
         }
-
         if (request.getTrainerUsername() == null || request.getTrainerUsername().isBlank()) {
             throw new InvalidWorkloadMessageException("trainerUsername is required");
         }
 
         LocalDate trainingDate = request.getTrainingDate();
-
-        if (trainingDate == null || trainingDate.isAfter(LocalDate.now())) {
-            throw new InvalidWorkloadMessageException(
-                    trainingDate == null
-                            ? "trainingDate is required"
-                            : "trainingDate cannot be in the future"
-            );
+        if (trainingDate == null) {
+            throw new InvalidWorkloadMessageException("trainingDate is required");
         }
-
         if (trainingDate.isAfter(LocalDate.now())) {
             throw new InvalidWorkloadMessageException("trainingDate cannot be in the future");
-        }
-
-        if (request.getActionType() == null) {
-            throw new InvalidWorkloadMessageException("actionType is required");
         }
     }
 
