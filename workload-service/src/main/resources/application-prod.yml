@@ -1,0 +1,4 @@
+workload:
+  messaging:
+    queue:
+      trainer-workload: ${TRAINER_WORKLOAD_QUEUE:}
