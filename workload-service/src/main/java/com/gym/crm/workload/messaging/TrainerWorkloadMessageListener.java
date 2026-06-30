@@ -80,10 +80,6 @@ public class TrainerWorkloadMessageListener {
             throw new InvalidWorkloadMessageException("trainerUsername is required");
         }
 
-        if (request.getActionType() == null) {
-            throw new InvalidWorkloadMessageException("actionType is required");
-        }
-
         LocalDate trainingDate = request.getTrainingDate();
         if (trainingDate == null) {
             throw new InvalidWorkloadMessageException("trainingDate is required");
@@ -105,7 +101,6 @@ public class TrainerWorkloadMessageListener {
 
     private void handleToDlq(TrainerWorkloadRequest request, String transactionId, String reason) {
         log.warn("Sending message to DLQ txId={} reason={}", transactionId, reason);
-
         deadLetterPublisher.send(request, transactionId, reason);
     }
 }

@@ -94,14 +94,16 @@ class TrainerWorkloadMessageListenerTest {
     }
 
     @Test
-    void onMessage_shouldSendToDlq_whenActionTypeIsNull() throws JMSException {
-        TrainerWorkloadRequest request = buildRequest().actionType(null);
+    void onMessage_shouldProcessMessage_whenActionTypeIsMissing() throws JMSException {
+        TrainerWorkloadRequest request = buildRequest();
+        request.setActionType(null);
+
         when(message.getStringProperty("transactionId")).thenReturn("tx-123");
 
         listener.onMessage(request, message);
 
-        verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
-        verify(deadLetterPublisher).send(any(), eq("tx-123"), contains("actionType is required"));
+        verify(trainerWorkloadService).updateTrainerWorkload(request);
+        verify(deadLetterPublisher, never()).send(any(), anyString(), anyString());
     }
 
     @Test
