@@ -68,7 +68,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(eq(request), anyString(), eq("tx-123"));
+        verify(deadLetterPublisher).send(eq(request), eq("tx-123"), anyString());
         verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
     }
 
@@ -79,7 +79,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(eq(request), anyString(), eq("tx-123"));
+        verify(deadLetterPublisher).send(eq(request), eq("tx-123"), anyString());
     }
 
     @Test
@@ -89,7 +89,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(eq(request), anyString(), eq("tx-123"));
+        verify(deadLetterPublisher).send(eq(request), eq("tx-123"), anyString());
     }
 
     @Test
@@ -99,7 +99,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(eq(request), anyString(), eq("tx-123"));
+        verify(deadLetterPublisher).send(eq(request), eq("tx-123"), anyString());
     }
 
     @Test
@@ -120,7 +120,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(eq(request), eq("Failed to update trainer workload"), eq("tx-123"));
+        verify(deadLetterPublisher).send(eq(request), eq("tx-123"), eq("Failed to update trainer workload"));
         verify(trainerWorkloadService).updateTrainerWorkload(request);
     }
 
@@ -133,7 +133,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(eq(request), eq("Failed to update trainer workload"), eq("tx-123"));
+        verify(deadLetterPublisher).send(eq(request), eq("tx-123"), eq("Failed to update trainer workload"));
         verify(trainerWorkloadService).updateTrainerWorkload(request);
     }
 
