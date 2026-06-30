@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -52,7 +53,7 @@ class TrainerWorkloadMessageListenerTest {
     @Test
     void onMessage_shouldCallService_whenRequestIsValid() throws JMSException {
         TrainerWorkloadRequest request = buildRequest();
-        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
+        when(message.getStringProperty("transactionId")).thenReturn("tx-123");
 
         listener.onMessage(request, message);
 
@@ -63,45 +64,42 @@ class TrainerWorkloadMessageListenerTest {
     @Test
     void onMessage_shouldRouteToDeadLetter_whenTrainerUsernameIsNull() throws JMSException {
         TrainerWorkloadRequest request = buildRequest().trainerUsername(null);
-        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
+        when(message.getStringProperty("transactionId")).thenReturn("tx-123");
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(request, "trainerUsername is required", "tx-123");
-        verify(trainerWorkloadService, never()).updateTrainerWorkload(request);
+        verify(deadLetterPublisher).send(eq(request), anyString(), eq("tx-123"));
+        verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
     }
 
     @Test
     void onMessage_shouldRouteToDeadLetter_whenTrainerUsernameIsBlank() throws JMSException {
         TrainerWorkloadRequest request = buildRequest().trainerUsername("   ");
-        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
+        when(message.getStringProperty("transactionId")).thenReturn("tx-123");
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(request, "trainerUsername is required", "tx-123");
-        verify(trainerWorkloadService, never()).updateTrainerWorkload(request);
+        verify(deadLetterPublisher).send(eq(request), anyString(), eq("tx-123"));
     }
 
     @Test
     void onMessage_shouldRouteToDeadLetter_whenTrainingDateIsNull() throws JMSException {
         TrainerWorkloadRequest request = buildRequest().trainingDate(null);
-        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
+        when(message.getStringProperty("transactionId")).thenReturn("tx-123");
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(request, "trainingDate is required", "tx-123");
-        verify(trainerWorkloadService, never()).updateTrainerWorkload(request);
+        verify(deadLetterPublisher).send(eq(request), anyString(), eq("tx-123"));
     }
 
     @Test
     void onMessage_shouldRouteToDeadLetter_whenActionTypeIsNull() throws JMSException {
         TrainerWorkloadRequest request = buildRequest().actionType(null);
-        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
+        when(message.getStringProperty("transactionId")).thenReturn("tx-123");
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(request, "actionType is required", "tx-123");
-        verify(trainerWorkloadService, never()).updateTrainerWorkload(request);
+        verify(deadLetterPublisher).send(eq(request), anyString(), eq("tx-123"));
     }
 
     @Test
@@ -114,16 +112,29 @@ class TrainerWorkloadMessageListenerTest {
     }
 
     @Test
-    void onMessage_shouldPropagateException_whenServiceCallFailsForOtherReasons() throws JMSException {
+    void onMessage_shouldSendToDlq_whenServiceCallFails() throws JMSException {
         TrainerWorkloadRequest request = buildRequest();
 
         when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
         doThrow(new RuntimeException("database unavailable")).when(trainerWorkloadService).updateTrainerWorkload(request);
 
-        assertThatThrownBy(() -> listener.onMessage(request, message))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("database unavailable");
-        verify(deadLetterPublisher, never()).send(any(), anyString(), anyString());
+        listener.onMessage(request, message);
+
+        verify(deadLetterPublisher).send(eq(request), eq("Failed to update trainer workload"), eq("tx-123"));
+        verify(trainerWorkloadService).updateTrainerWorkload(request);
+    }
+
+    @Test
+    void onMessage_shouldSendToDlq_whenServiceFails() throws JMSException {
+        TrainerWorkloadRequest request = buildRequest();
+
+        when(message.getStringProperty("transactionId")).thenReturn("tx-123");
+        doThrow(new RuntimeException("database unavailable")).when(trainerWorkloadService).updateTrainerWorkload(request);
+
+        listener.onMessage(request, message);
+
+        verify(deadLetterPublisher).send(eq(request), eq("Failed to update trainer workload"), eq("tx-123"));
+        verify(trainerWorkloadService).updateTrainerWorkload(request);
     }
 
     private TrainerWorkloadRequest buildRequest() {

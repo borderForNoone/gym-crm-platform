@@ -1,5 +1,7 @@
 package com.gym.crm.workload.messaging;
 
+import com.gym.crm.workload.exception.InvalidWorkloadMessageException;
+import com.gym.crm.workload.exception.WorkloadMessageProcessingException;
 import com.gym.crm.workload.service.TrainerWorkloadService;
 import gym.crm.platform.workload.openapi.TrainerWorkloadRequest;
 import jakarta.jms.JMSException;
@@ -26,49 +28,81 @@ public class TrainerWorkloadMessageListener {
         MDC.put(MDC_TRANSACTION_ID_KEY, transactionId);
 
         try {
-            log.info("Received workload event trainer={} action={} txId={}", request.getTrainerUsername(), request.getActionType(), transactionId);
-            validateOrSendToDeadLetter(request, transactionId);
+            log.info("Received workload event trainer={} action={} txId={}",
+                    request.getTrainerUsername(),
+                    request.getActionType(),
+                    transactionId);
+
+            validate(request);
+
+            process(request, transactionId);
+
+        } catch (InvalidWorkloadMessageException e) {
+            handleToDlq(request, transactionId, e.getMessage());
+
+        } catch (WorkloadMessageProcessingException e) {
+            handleToDlq(request, transactionId, e.getMessage());
+
+        } catch (Exception e) {
+            log.error("Unexpected error while processing workload message", e);
+            handleToDlq(request, transactionId, "Unexpected error: " + e.getMessage());
+
         } finally {
             MDC.remove(MDC_TRANSACTION_ID_KEY);
         }
     }
 
-    private void validateOrSendToDeadLetter(TrainerWorkloadRequest request, String transactionId) {
+    private void process(TrainerWorkloadRequest request, String transactionId) {
         try {
-            validate(request);
-        } catch (IllegalArgumentException invalidMessage) {
-            deadLetterPublisher.send(request, invalidMessage.getMessage(), transactionId);
-            return;
-        }
+            trainerWorkloadService.updateTrainerWorkload(request);
 
-        trainerWorkloadService.updateTrainerWorkload(request);
-        log.info("Workload event processed successfully trainer={} txId={}", request.getTrainerUsername(), transactionId);
+            log.info("Workload processed successfully trainer={} txId={}",
+                    request.getTrainerUsername(),
+                    transactionId);
+
+        } catch (Exception e) {
+            throw new WorkloadMessageProcessingException(
+                    "Failed to update trainer workload",
+                    e
+            );
+        }
     }
 
     private void validate(TrainerWorkloadRequest request) {
-        requireNotNull(request.getTrainerUsername(), "trainerUsername is required");
-        requireNotBlank(request.getTrainerUsername(), "trainerUsername is required");
-        requireNotNull(request.getTrainingDate(), "trainingDate is required");
-        requireNotNull(request.getActionType(), "actionType is required");
-    }
+        if (request == null) {
+            throw new InvalidWorkloadMessageException("Request is null");
+        }
 
-    private void requireNotNull(Object value, String message) {
-        if (value == null) {
-            throw new IllegalArgumentException(message);
+        if (request.getTrainerUsername() == null || request.getTrainerUsername().isBlank()) {
+            throw new InvalidWorkloadMessageException("trainerUsername is required");
+        }
+
+        if (request.getTrainingDate() == null) {
+            throw new InvalidWorkloadMessageException("trainingDate is required");
+        }
+
+        if (request.getActionType() == null) {
+            throw new InvalidWorkloadMessageException("actionType is required");
         }
     }
 
-    private void requireNotBlank(String value, String message) {
-        if (value.isBlank()) {
-            throw new IllegalArgumentException(message);
-        }
+    private void handleToDlq(TrainerWorkloadRequest request,
+                             String transactionId,
+                             String reason) {
+
+        log.error("Sending message to DLQ. trainer={} reason={} txId={}",
+                request.getTrainerUsername(),
+                reason,
+                transactionId);
+
+        deadLetterPublisher.send(request, reason, transactionId);
     }
 
     private String extractTransactionId(Message message) {
         try {
             return message.getStringProperty(TRANSACTION_ID_PROPERTY);
-        } catch (JMSException exception) {
-            log.warn("Could not extract transactionId from message: {}", exception.getMessage());
+        } catch (JMSException e) {
+            log.warn("Could not extract transactionId: {}", e.getMessage());
             return null;
         }
     }
