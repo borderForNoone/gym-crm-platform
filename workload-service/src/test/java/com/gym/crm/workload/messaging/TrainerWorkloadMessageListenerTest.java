@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -93,14 +94,14 @@ class TrainerWorkloadMessageListenerTest {
     }
 
     @Test
-    void onMessage_shouldProcessMessage_whenActionTypeIsNull() throws JMSException {
+    void onMessage_shouldSendToDlq_whenActionTypeIsNull() throws JMSException {
         TrainerWorkloadRequest request = buildRequest().actionType(null);
         when(message.getStringProperty("transactionId")).thenReturn("tx-123");
 
         listener.onMessage(request, message);
 
-        verify(trainerWorkloadService).updateTrainerWorkload(request);
-        verify(deadLetterPublisher, never()).send(any(), anyString(), anyString());
+        verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
+        verify(deadLetterPublisher).send(any(), eq("tx-123"), contains("actionType is required"));
     }
 
     @Test
