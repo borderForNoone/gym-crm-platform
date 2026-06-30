@@ -67,19 +67,13 @@ public class TrainerWorkloadMessageListener {
         if (request == null) {
             throw new InvalidWorkloadMessageException("Request is null");
         }
-
         String username = request.getTrainerUsername();
         if (username == null || username.isBlank()) {
             throw new InvalidWorkloadMessageException("trainerUsername is required");
         }
-
         LocalDate trainingDate = request.getTrainingDate();
-        if (trainingDate == null) {
-            throw new InvalidWorkloadMessageException("trainingDate is required");
-        }
-
-        if (trainingDate.isAfter(LocalDate.now(clock))) {
-            throw new InvalidWorkloadMessageException("trainingDate cannot be in the future");
+        if (trainingDate == null || trainingDate.isAfter(LocalDate.now(clock))) {
+            throw new InvalidWorkloadMessageException("trainingDate is required and cannot be in the future");
         }
     }
 
