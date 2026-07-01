@@ -55,9 +55,7 @@ public class JmsConfig {
 
     @Bean
     public DefaultJmsListenerContainerFactory jmsListenerContainerFactory(ConnectionFactory connectionFactory, DefaultJmsListenerContainerFactoryConfigurer configurer,
-            MessageConverter messageConverter,
-            ErrorHandler jmsErrorHandler,
-            @Value("${workload.messaging.consumer.concurrency}") String concurrency) {
+            MessageConverter messageConverter, ErrorHandler jmsErrorHandler, @Value("${workload.messaging.consumer.concurrency}") String concurrency) {
         DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
 
         configurer.configure(factory, connectionFactory);
