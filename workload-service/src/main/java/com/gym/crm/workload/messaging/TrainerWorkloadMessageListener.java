@@ -26,11 +26,9 @@ public class TrainerWorkloadMessageListener {
         MDC.put(MDC_TRANSACTION_ID_KEY, transactionId);
 
         try {
-            log.info("Received workload event trainer={} action={} txId={}",
-                    request.getTrainerUsername(),
-                    request.getActionType(),
-                    transactionId);
+            log.info("Received workload event trainer={} action={} txId={}", request.getTrainerUsername(), request.getActionType(), transactionId);
             validateOrSendToDeadLetter(request, transactionId);
+            log.info("Finished processing workload event trainer={} action={} txId={}", request.getTrainerUsername(), request.getActionType(), transactionId);
         } finally {
             MDC.remove(MDC_TRANSACTION_ID_KEY);
         }
