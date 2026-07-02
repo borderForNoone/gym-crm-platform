@@ -37,7 +37,7 @@ class JwtServiceTest {
 
         String actualUsername = jwtService.extractUsername(jwtToken);
 
-        assertEquals(actualUsername, "trainer");
+        assertEquals("trainer", actualUsername);
     }
 
     @Test

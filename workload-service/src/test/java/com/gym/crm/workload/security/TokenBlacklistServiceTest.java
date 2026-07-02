@@ -20,7 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class TokenBlacklistServiceTest {
+class TokenBlacklistServiceTest {
     private static final String TOKEN = "jwt-token";
     private static final String HASHED_TOKEN = "637dca1ed85901f74d2634ec978c3e441598b7cc2f86a2b9a004662222009808";
     private static final String BLACKLIST_KEY = "blacklist:" + HASHED_TOKEN;
