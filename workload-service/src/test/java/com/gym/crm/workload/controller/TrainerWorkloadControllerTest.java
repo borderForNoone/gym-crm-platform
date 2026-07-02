@@ -1,9 +1,13 @@
 package com.gym.crm.workload.controller;
 
+import com.gym.crm.workload.config.NoSecurityConfig;
+import com.gym.crm.workload.security.JwtService;
+import com.gym.crm.workload.security.TokenBlacklistService;
 import com.gym.crm.workload.service.TrainerWorkloadService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -14,6 +18,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 @WebMvcTest(TrainerWorkloadController.class)
+@Import(NoSecurityConfig.class)
 class TrainerWorkloadControllerTest {
     private static final String BASE_URL = "/api/v1/trainer-workloads";
     private static final String USERNAME = "billy.herrington";
@@ -27,6 +32,10 @@ class TrainerWorkloadControllerTest {
 
     @MockitoBean
     private TrainerWorkloadService trainerWorkloadService;
+    @MockitoBean
+    private JwtService jwtService;
+    @MockitoBean
+    private TokenBlacklistService tokenBlacklistService;
 
     @Test
     void getTrainerMonthlyWorkload_shouldReturnOk() throws Exception {

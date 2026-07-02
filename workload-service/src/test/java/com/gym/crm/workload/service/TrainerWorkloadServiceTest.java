@@ -5,6 +5,8 @@ import gym.crm.platform.workload.openapi.TrainerWorkloadRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.LocalDate;
@@ -22,6 +24,9 @@ class TrainerWorkloadServiceTest {
     private static final String LAST_NAME = "Herrington";
     private static final int YEAR = 2026;
     private static final int MONTH = 6;
+
+    @MockitoBean
+    private StringRedisTemplate stringRedisTemplate;
 
     @Autowired
     private TrainerWorkloadServiceImpl service;
