@@ -8,8 +8,12 @@ eureka:
 spring:
   activemq:
     broker-url: vm://localhost?broker.persistent=false
-    user: admin
-    password: admin
+    user: gym
+    password: gym
+
+jwt:
+  secret: test-secret-key-test-secret-key-test-secret-key
+  expiration: 3600000
 
 activemq:
   destination:
