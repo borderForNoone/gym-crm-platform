@@ -74,7 +74,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(request, "tx-123", "Unexpected error: trainerUsername is required");
+        verify(deadLetterPublisher).send(request, "Unexpected error: trainerUsername is required", "tx-123");
         verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
     }
 
@@ -85,7 +85,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(request, "tx-123", "trainerUsername cannot be blank");
+        verify(deadLetterPublisher).send(request, "trainerUsername cannot be blank", "tx-123");
         verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
     }
 
@@ -96,7 +96,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(eq(request), eq("tx-123"), anyString());
+        verify(deadLetterPublisher).send(eq(request), anyString(), eq("tx-123"));
     }
 
     @Test
@@ -130,7 +130,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(request, "tx-123", "Failed to update trainer workload");
+        verify(deadLetterPublisher).send(request, "Failed to update trainer workload", "tx-123");
         verify(trainerWorkloadService).updateTrainerWorkload(request);
     }
 
@@ -143,7 +143,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(request, "tx-123", "Failed to update trainer workload");
+        verify(deadLetterPublisher).send(request, "Failed to update trainer workload", "tx-123");
         verify(trainerWorkloadService).updateTrainerWorkload(request);
     }
 
@@ -156,7 +156,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(eq(request), eq("tx-999"), anyString());
+        verify(deadLetterPublisher).send(eq(request), anyString(), eq("tx-999"));
     }
 
     @Test
@@ -165,7 +165,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(null, message);
 
-        verify(deadLetterPublisher).send(null, "tx-null", "Request is null");
+        verify(deadLetterPublisher).send(null, "Request is null", "tx-null");
         verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
     }
 
