@@ -7,4 +7,9 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone:  http://localhost:8761/eureka
+      defaultZone: http://localhost:8761/eureka
+
+workload:
+  messaging:
+    consumer:
+      concurrency: 2-3

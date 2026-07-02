@@ -17,3 +17,8 @@ activemq:
     trainer-workload-dlq: trainer-workload-dlq
   redelivery:
     max-redeliveries: 3
+
+workload:
+  messaging:
+    consumer:
+      concurrency: 2

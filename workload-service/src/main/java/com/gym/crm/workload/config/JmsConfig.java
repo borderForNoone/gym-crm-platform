@@ -4,6 +4,7 @@ import jakarta.jms.ConnectionFactory;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.RedeliveryPolicy;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.jms.DefaultJmsListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
@@ -11,22 +12,27 @@ import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.support.converter.MappingJackson2MessageConverter;
 import org.springframework.jms.support.converter.MessageConverter;
 import org.springframework.jms.support.converter.MessageType;
+import org.springframework.util.ErrorHandler;
 
 import java.util.List;
 
 @Configuration
 public class JmsConfig {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(JmsConfig.class);
+
     @Value("${spring.activemq.broker-url}")
     private String brokerUrl;
-
     @Value("${spring.activemq.user}")
     private String user;
-
     @Value("${spring.activemq.password}")
     private String password;
-
     @Value("${activemq.redelivery.max-redeliveries:3}")
     private int maxRedeliveries;
+
+    @Bean
+    public ErrorHandler jmsErrorHandler() {
+        return trThrowable -> log.error("Unhandled JMS error", trThrowable);
+    }
 
     @Bean
     public ConnectionFactory connectionFactory() {
@@ -48,11 +54,16 @@ public class JmsConfig {
     }
 
     @Bean
-    public DefaultJmsListenerContainerFactory jmsListenerContainerFactory(ConnectionFactory connectionFactory, MessageConverter messageConverter) {
+    public DefaultJmsListenerContainerFactory jmsListenerContainerFactory(ConnectionFactory connectionFactory, DefaultJmsListenerContainerFactoryConfigurer configurer,
+            MessageConverter messageConverter, ErrorHandler jmsErrorHandler, @Value("${workload.messaging.consumer.concurrency}") String concurrency) {
         DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
-        factory.setConnectionFactory(connectionFactory);
+
+        configurer.configure(factory, connectionFactory);
+
         factory.setMessageConverter(messageConverter);
         factory.setSessionTransacted(true);
+        factory.setErrorHandler(jmsErrorHandler);
+        factory.setConcurrency(concurrency);
 
         return factory;
     }
