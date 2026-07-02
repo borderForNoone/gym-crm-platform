@@ -7,14 +7,21 @@ spring:
     password: ${ACTIVEMQ_PASSWORD}
   jms:
     pub-sub-domain: false
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
 
 activemq:
   destination:
     trainer-workload: trainer-workload-queue
     trainer-workload-dlq: trainer-workload-dlq
-
   redelivery:
     max-redeliveries: 3
+
+jwt:
+  secret: ${JWT_SECRET}
 
 logging:
   pattern:
