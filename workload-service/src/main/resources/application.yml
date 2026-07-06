@@ -5,6 +5,8 @@ spring:
     broker-url: ${ACTIVEMQ_BROKER_URL}
     user: ${ACTIVEMQ_USER}
     password: ${ACTIVEMQ_PASSWORD}
+  mongodb:
+    uri: ${MONGODB_URI:}
   jms:
     pub-sub-domain: false
   data:

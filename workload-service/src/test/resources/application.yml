@@ -10,6 +10,9 @@ spring:
     broker-url: vm://localhost?broker.persistent=false
     user: gym
     password: gym
+  jms:
+    listener:
+      auto-startup: false
 
 jwt:
   secret: test-secret-key-test-secret-key-test-secret-key
