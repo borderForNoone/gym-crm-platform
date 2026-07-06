@@ -85,6 +85,6 @@ public class TrainerWorkloadMessageListener {
 
     private void handleToDlq(TrainerWorkloadRequest request, String transactionId, String reason) {
         log.warn("Sending message to DLQ txId={} reason={}", transactionId, reason);
-        deadLetterPublisher.send(request, transactionId, reason);
+        deadLetterPublisher.send(request, reason, transactionId);
     }
 }
