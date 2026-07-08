@@ -21,7 +21,7 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
     private final TrainerWorkloadRepository repository;
 
     public void updateTrainerWorkload(TrainerWorkloadRequest request) {
-        TrainerWorkload workload = repository.findByUsername(request.getTrainerUsername())
+        TrainerWorkload workload = repository.findByTrainerUsername(request.getTrainerUsername())
                 .map(existing -> refreshTrainer(existing, request))
                 .orElseGet(() -> createWorkload(request));
 
@@ -51,7 +51,7 @@ public class TrainerWorkloadServiceImpl implements TrainerWorkloadService {
     }
 
     private TrainerWorkload findWorkload(String username) {
-        return repository.findByUsername(username).orElseThrow(() -> new NoSuchElementException(String.format("Trainer workload not found: %s", username)));
+        return repository.findByTrainerUsername(username).orElseThrow(() -> new NoSuchElementException(String.format("Trainer workload not found: %s", username)));
     }
 
     private TrainerWorkload createWorkload(TrainerWorkloadRequest request) {
