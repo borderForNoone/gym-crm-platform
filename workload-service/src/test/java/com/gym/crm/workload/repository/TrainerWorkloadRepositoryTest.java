@@ -7,15 +7,10 @@ import com.gym.crm.workload.model.YearSummary;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DataMongoTest
 class TrainerWorkloadRepositoryTest extends MongoContainerTestConfig<TrainerWorkloadRepository> {
