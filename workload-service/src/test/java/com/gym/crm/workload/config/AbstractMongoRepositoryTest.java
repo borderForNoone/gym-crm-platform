@@ -7,7 +7,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MongoDBContainer;
 
-public abstract class MongoContainerTestConfig<T extends MongoRepository<?, ?>> {
+public abstract class AbstractMongoRepositoryTest<T extends MongoRepository<?, ?>> {
     private static final String MONGO_IMAGE = "mongo:7.0.12";
     private static final MongoDBContainer MONGO = new MongoDBContainer(MONGO_IMAGE);
 

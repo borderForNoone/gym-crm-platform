@@ -1,6 +1,6 @@
 package com.gym.crm.workload.repository;
 
-import com.gym.crm.workload.config.MongoContainerTestConfig;
+import com.gym.crm.workload.config.AbstractMongoRepositoryTest;
 import com.gym.crm.workload.model.MonthSummary;
 import com.gym.crm.workload.model.TrainerWorkload;
 import com.gym.crm.workload.model.YearSummary;
@@ -13,7 +13,7 @@ import java.util.Optional;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @DataMongoTest
-class TrainerWorkloadRepositoryTest extends MongoContainerTestConfig<TrainerWorkloadRepository> {
+class TrainerWorkloadRepositoryTestAbstract extends AbstractMongoRepositoryTest<TrainerWorkloadRepository> {
     private static final String USERNAME = "billy.herrington";
     private static final String UNKNOWN_USERNAME = "unknown.user";
     private static final String FIRST_NAME = "Billy";
