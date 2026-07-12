@@ -7,6 +7,8 @@ import gym.crm.platform.workload.openapi.TrainerWorkloadRequest;
 import io.micrometer.common.util.StringUtils;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -15,6 +17,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -26,6 +30,7 @@ public class TrainerWorkloadMessageListener {
     private final TrainerWorkloadService trainerWorkloadService;
     private final DeadLetterPublisher deadLetterPublisher;
     private final Clock clock;
+    private final Validator validator;
 
     @JmsListener(destination = "${activemq.destination.trainer-workload}")
     public void onMessage(TrainerWorkloadRequest request, Message message) {
@@ -61,15 +66,15 @@ public class TrainerWorkloadMessageListener {
             throw new InvalidWorkloadMessageException("Request is null");
         }
 
-        if (StringUtils.isBlank(request.getTrainerUsername())) {
-            throw new InvalidWorkloadMessageException("trainerUsername cannot be blank");
+        Set<ConstraintViolation<TrainerWorkloadRequest>> violations = validator.validate(request);
+        if (!violations.isEmpty()) {
+            String message = violations.stream()
+                    .map(v -> v.getPropertyPath() + " " + v.getMessage())
+                    .collect(Collectors.joining("; "));
+            throw new InvalidWorkloadMessageException(message);
         }
 
-        LocalDate trainingDate = request.getTrainingDate();
-        if (trainingDate == null) {
-            throw new InvalidWorkloadMessageException("trainingDate is required");
-        }
-        if (trainingDate.isAfter(LocalDate.now(clock))) {
+        if (request.getTrainingDate().isAfter(LocalDate.now(clock))) {
             throw new InvalidWorkloadMessageException("trainingDate cannot be in the future");
         }
     }
