@@ -1,9 +1,10 @@
-package com.gym.crm.workload.service;
+package com.gym.crm.workload.service.impl;
 
 import com.gym.crm.workload.model.MonthSummary;
 import com.gym.crm.workload.model.TrainerWorkload;
 import com.gym.crm.workload.model.YearSummary;
 import com.gym.crm.workload.repository.TrainerWorkloadRepository;
+import com.gym.crm.workload.service.TrainerWorkloadService;
 import gym.crm.platform.workload.openapi.TrainerWorkloadRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

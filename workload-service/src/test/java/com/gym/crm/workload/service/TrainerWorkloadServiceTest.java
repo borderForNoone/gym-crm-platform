@@ -4,6 +4,7 @@ import com.gym.crm.workload.model.MonthSummary;
 import com.gym.crm.workload.model.TrainerWorkload;
 import com.gym.crm.workload.model.YearSummary;
 import com.gym.crm.workload.repository.TrainerWorkloadRepository;
+import com.gym.crm.workload.service.impl.TrainerWorkloadServiceImpl;
 import gym.crm.platform.workload.openapi.ActionType;
 import gym.crm.platform.workload.openapi.TrainerWorkloadRequest;
 import org.junit.jupiter.api.Test;
