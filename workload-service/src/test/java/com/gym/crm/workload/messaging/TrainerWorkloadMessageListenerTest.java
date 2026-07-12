@@ -5,6 +5,8 @@ import gym.crm.platform.workload.openapi.ActionType;
 import gym.crm.platform.workload.openapi.TrainerWorkloadRequest;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +43,7 @@ class TrainerWorkloadMessageListenerTest {
     @Mock
     private Message message;
 
+    private Validator validator;
     private TrainerWorkloadMessageListener listener;
 
     @BeforeEach
@@ -48,7 +51,8 @@ class TrainerWorkloadMessageListenerTest {
         lenient().when(clock.instant()).thenReturn(java.time.Instant.parse("2026-06-30T00:00:00Z"));
         lenient().when(clock.getZone()).thenReturn(java.time.ZoneOffset.UTC);
 
-        listener = new TrainerWorkloadMessageListener(trainerWorkloadService, deadLetterPublisher, clock);
+        validator = Validation.buildDefaultValidatorFactory().getValidator();
+        listener = new TrainerWorkloadMessageListener(trainerWorkloadService, deadLetterPublisher, clock, validator);
     }
 
     @AfterEach
@@ -74,7 +78,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(request, "Unexpected error: trainerUsername is required", "tx-123");
+        verify(deadLetterPublisher).send(eq(request), anyString(), eq("tx-123"));
         verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
     }
 
@@ -85,7 +89,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(request, "trainerUsername cannot be blank", "tx-123");
+        verify(deadLetterPublisher).send(eq(request), anyString(), eq("tx-123"));
         verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
     }
 
@@ -100,16 +104,16 @@ class TrainerWorkloadMessageListenerTest {
     }
 
     @Test
-    void onMessage_shouldProcessMessage_whenActionTypeIsMissing() throws JMSException {
+    void onMessage_shouldRouteToDeadLetter_whenActionTypeIsMissing() throws JMSException {
         TrainerWorkloadRequest request = buildRequest();
         request.setActionType(null);
 
-        when(message.getStringProperty("transactionId")).thenReturn("tx-123");
+        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
 
         listener.onMessage(request, message);
 
-        verify(trainerWorkloadService).updateTrainerWorkload(request);
-        verify(deadLetterPublisher, never()).send(any(), anyString(), anyString());
+        verify(deadLetterPublisher).send(eq(request), anyString(), eq("tx-123"));
+        verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
     }
 
     @Test
