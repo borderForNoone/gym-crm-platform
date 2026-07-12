@@ -5,6 +5,8 @@ import gym.crm.platform.workload.openapi.ActionType;
 import gym.crm.platform.workload.openapi.TrainerWorkloadRequest;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +43,7 @@ class TrainerWorkloadMessageListenerTest {
     @Mock
     private Message message;
 
+    private Validator validator;
     private TrainerWorkloadMessageListener listener;
 
     @BeforeEach
@@ -48,7 +51,8 @@ class TrainerWorkloadMessageListenerTest {
         lenient().when(clock.instant()).thenReturn(java.time.Instant.parse("2026-06-30T00:00:00Z"));
         lenient().when(clock.getZone()).thenReturn(java.time.ZoneOffset.UTC);
 
-        listener = new TrainerWorkloadMessageListener(trainerWorkloadService, deadLetterPublisher, clock);
+        validator = Validation.buildDefaultValidatorFactory().getValidator();
+        listener = new TrainerWorkloadMessageListener(trainerWorkloadService, deadLetterPublisher, clock, validator);
     }
 
     @AfterEach
