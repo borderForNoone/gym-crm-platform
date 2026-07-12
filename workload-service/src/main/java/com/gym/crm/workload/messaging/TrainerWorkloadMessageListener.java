@@ -4,7 +4,6 @@ import com.gym.crm.workload.exception.InvalidWorkloadMessageException;
 import com.gym.crm.workload.exception.WorkloadMessageProcessingException;
 import com.gym.crm.workload.service.TrainerWorkloadService;
 import gym.crm.platform.workload.openapi.TrainerWorkloadRequest;
-import io.micrometer.common.util.StringUtils;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Slf4j
 @Component
@@ -61,14 +61,14 @@ public class TrainerWorkloadMessageListener {
             throw new InvalidWorkloadMessageException("Request is null");
         }
 
-        if (StringUtils.isBlank(request.getTrainerUsername())) {
+        String username = request.getTrainerUsername();
+        Objects.requireNonNull(username, "trainerUsername is required");
+        if (username.isBlank()) {
             throw new InvalidWorkloadMessageException("trainerUsername cannot be blank");
         }
 
         LocalDate trainingDate = request.getTrainingDate();
-        if (trainingDate == null) {
-            throw new InvalidWorkloadMessageException("trainingDate is required");
-        }
+        Objects.requireNonNull(trainingDate, "trainingDate is required");
         if (trainingDate.isAfter(LocalDate.now(clock))) {
             throw new InvalidWorkloadMessageException("trainingDate cannot be in the future");
         }
