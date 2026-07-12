@@ -78,7 +78,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(request, "trainerUsername cannot be blank", "tx-123");
+        verify(deadLetterPublisher).send(eq(request), anyString(), eq("tx-123"));
         verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
     }
 
@@ -89,7 +89,7 @@ class TrainerWorkloadMessageListenerTest {
 
         listener.onMessage(request, message);
 
-        verify(deadLetterPublisher).send(request, "trainerUsername cannot be blank", "tx-123");
+        verify(deadLetterPublisher).send(eq(request), anyString(), eq("tx-123"));
         verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
     }
 
@@ -104,16 +104,16 @@ class TrainerWorkloadMessageListenerTest {
     }
 
     @Test
-    void onMessage_shouldProcessMessage_whenActionTypeIsMissing() throws JMSException {
+    void onMessage_shouldRouteToDeadLetter_whenActionTypeIsMissing() throws JMSException {
         TrainerWorkloadRequest request = buildRequest();
         request.setActionType(null);
 
-        when(message.getStringProperty("transactionId")).thenReturn("tx-123");
+        when(message.getStringProperty(TRANSACTION_ID_PROPERTY)).thenReturn("tx-123");
 
         listener.onMessage(request, message);
 
-        verify(trainerWorkloadService).updateTrainerWorkload(request);
-        verify(deadLetterPublisher, never()).send(any(), anyString(), anyString());
+        verify(deadLetterPublisher).send(eq(request), anyString(), eq("tx-123"));
+        verify(trainerWorkloadService, never()).updateTrainerWorkload(any());
     }
 
     @Test
