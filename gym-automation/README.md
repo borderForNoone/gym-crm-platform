@@ -52,7 +52,7 @@ Available tags: `@component`, `@core`, plus one per scenario (e.g. `@trainee-reg
 ## Configuration
 
 Defaults (base URLs, test-user credentials) live in
-[`src/test/resources/bdd-test.yml`](src/test/resources/bdd-test.yml) — nothing is hardcoded in
+[`src/test/resources/application.yml`](src/test/resources/application.yml) — nothing is hardcoded in
 Java. The nested YAML is flattened into dot-notation keys at load time (e.g.
 `system.tests.core.base-url`), which is also the exact name of the system property that
 overrides it. There are two ways to change a value, depending on how permanent the change is:
@@ -93,7 +93,7 @@ then the flattened YAML file, with a hard failure if a key exists in neither).
 | `support`  | Scenario-shared state (`TestContext`) and request-body builders (`Payloads`) |
 | `steps`    | Cucumber step definitions, constructor-injected with `TestContext` via `cucumber-picocontainer` |
 | `resources/features` | Gherkin scenarios (the tests themselves)                          |
-| `resources/bdd-test.yml` | Externalized default configuration (nested YAML, flattened at load time) |
+| `resources/application.yml` | Externalized default configuration (nested YAML, flattened at load time) |
 
 Step classes only ever call `ApiClient`, never RestAssured directly, and never hardcode a base
 URL — always go through `TestProperties`.
@@ -101,10 +101,10 @@ URL — always go through `TestProperties`.
 ## Troubleshooting
 
 - **`Connection refused`** — the target service isn't running, or is running on a different
-  port/context-path than the defaults in `bdd-test.yml`. Confirm it's up, or override
+  port/context-path than the defaults in `application.yml`. Confirm it's up, or override
   the base URL as shown above.
-- **`IllegalStateException: bdd-test.yml not found on the test classpath`** — the file
-  isn't where `TestProperties` expects it (`src/test/resources/bdd-test.yml`), or a
+- **`IllegalStateException: application.yml not found on the test classpath`** — the file
+  isn't where `TestProperties` expects it (`src/test/resources/application.yml`), or a
   clean/rebuild is needed so it gets copied into `target/test-classes`.
 - **`UndefinedStepException` / all steps undefined at once** — almost always a mismatch between
   the `GLUE_PROPERTY_NAME` value in `CucumberTest.java` and the actual `package` declared in the

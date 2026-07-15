@@ -14,10 +14,8 @@
     <packaging>jar</packaging>
     <name>bdd-tests</name>
     <description>
-        Component and integration BDD tests (Cucumber) for gym-core-service and workload-service.
-        Boots both services as black-box Spring Boot applications backed by Testcontainers and
-        exercises them exclusively through their public REST/JMS contracts - no in-process wiring,
-        no @SpringBootTest injection into step classes.
+        Cucumber BDD component and integration tests for gym-core-service and workload-service,
+        executed as black-box applications through their public REST and JMS APIs.
     </description>
 
     <properties>
@@ -83,6 +81,36 @@
             <artifactId>snakeyaml</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mysql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mongodb</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>activemq</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -92,7 +120,7 @@
                 <configuration>
                     <skipTests>${skipSystemTests}</skipTests>
                     <includes>
-                        <include>**/*CucumberTest.java</include>
+                        <include>**/*CucumberRunner.java</include>
                     </includes>
                     <systemPropertyVariables>
                         <cucumber.junit-platform.naming-strategy>long</cucumber.junit-platform.naming-strategy>

@@ -18,26 +18,16 @@ public class TestProperties {
         return value("system", "tests", "workload", "base-url");
     }
 
-    public static String defaultUsername() {
-        return value("system", "tests", "user", "username");
-    }
-
-    public static String defaultPassword() {
-        return value("system", "tests", "user", "password");
-    }
-
     @SuppressWarnings("unchecked")
     private static Map<String, Object> load() {
-        try (InputStream input = TestProperties.class.getClassLoader()
-                .getResourceAsStream("system-test.yml")) {
-
+        try (InputStream input = TestProperties.class.getClassLoader().getResourceAsStream("application.yml")) {
             if (input == null) {
-                throw new IllegalStateException("system-test.yml not found");
+                throw new IllegalStateException("application.yml not found");
             }
 
             return new Yaml().load(input);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load system-test.yml", e);
+            throw new RuntimeException("Failed to load application.yml", e);
         }
     }
 

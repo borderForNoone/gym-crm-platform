@@ -4,9 +4,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
   liquibase:
     change-log: classpath:db/migration/master.xml
     enabled: true
