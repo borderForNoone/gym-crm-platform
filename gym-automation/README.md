@@ -22,7 +22,7 @@ Start both services the same way you always do (IDE Run configuration, or
 ## Running the tests
 
 These tests are **off by default** (`skipBddTests=true` in `pom.xml`) so they never block a
-normal `mvn test` / `mvn verify` build — they only run when explicitly requested, since they
+normal `mvn test` / `mvn verify` build—they only run when explicitly requested, since they
 require a live environment.
 
 ### From the console (Maven)
@@ -33,14 +33,14 @@ mvn test -pl bdd-tests -DskipBddTests=false
 
 ### From the IDE
 
-Run the class `com.gym.crm.bdd.CucumberTest` (right-click → Run) — it's a JUnit 5 Platform
+Run the class `com.gym.crm.bdd.CucumberRunner` (right-click → Run). It's a JUnit 5 Platform
 Suite that discovers and runs every `.feature` file under `src/test/resources/features`.
 Running it directly from the IDE bypasses the Surefire `skipBddTests` gate, so no extra flag is
-needed there.
+needed.
 
 ### Running a subset
 
-Every scenario is tagged. Filter by tag with the standard Cucumber JUnit-platform property:
+Every scenario is tagged. Filter by tag with the standard Cucumber JUnit Platform property:
 
 ```bash
 mvn test -pl bdd-tests -DskipBddTests=false -Dcucumber.filter.tags="@core"
@@ -51,14 +51,9 @@ Available tags: `@component`, `@core`, plus one per scenario (e.g. `@trainee-reg
 
 ## Configuration
 
-Defaults (base URLs, test-user credentials) live in
-[`src/test/resources/application.yml`](src/test/resources/application.yml) — nothing is hardcoded in
-Java. The nested YAML is flattened into dot-notation keys at load time (e.g.
-`system.tests.core.base-url`), which is also the exact name of the system property that
-overrides it. There are two ways to change a value, depending on how permanent the change is:
-
-**Edit the file** if the new value should become the checked-in default for everyone (e.g. the
-services' ports genuinely changed):
+Default service URLs live in
+[`src/test/resources/application.yml`](src/test/resources/application.yml). Nothing is hardcoded
+in Java.
 
 ```yaml
 system:
@@ -67,13 +62,9 @@ system:
       base-url: http://localhost:8080/api/v1
     workload:
       base-url: http://localhost:8082/workload-service/api/v1
-    user:
-      username: billy.herrington
-      password: password
 ```
 
-**Pass a system property** for a one-off run against a different environment — this always
-wins over the file, no code or file changes needed:
+Override them for a one-off run using system properties:
 
 ```bash
 mvn test -pl bdd-tests -DskipBddTests=false \
@@ -81,22 +72,21 @@ mvn test -pl bdd-tests -DskipBddTests=false \
   -Dsystem.tests.workload.base-url=http://staging-host:8082/workload-service/api/v1
 ```
 
-See `com.gym.crm.bdd.config.TestProperties` for how the two are merged (system property first,
-then the flattened YAML file, with a hard failure if a key exists in neither).
+System properties take precedence over values from `application.yml`.
 
 ## Module layout
 
-| Package    | Responsibility                                                             |
-|------------|-----------------------------------------------------------------------------|
-| `config`   | `TestProperties` — resolves base URLs / credentials from the YAML file + system property overrides |
-| `client`   | Thin HTTP wrapper (`ApiClient`) — the only place that knows about RestAssured |
-| `support`  | Scenario-shared state (`TestContext`) and request-body builders (`Payloads`) |
-| `steps`    | Cucumber step definitions, constructor-injected with `TestContext` via `cucumber-picocontainer` |
-| `resources/features` | Gherkin scenarios (the tests themselves)                          |
-| `resources/application.yml` | Externalized default configuration (nested YAML, flattened at load time) |
+| Package | Responsibility |
+|---------|----------------|
+| `config` | `TestProperties` — resolves service URLs from `application.yml` and system property overrides |
+| `client` | Thin HTTP wrapper (`ApiClient`) — the only place that knows about RestAssured |
+| `support` | Scenario-shared state (`TestContext`) and request-body builders (`Payloads`) |
+| `steps` | Cucumber step definitions, constructor-injected with `TestContext` via `cucumber-picocontainer` |
+| `resources/features` | Gherkin scenarios (the tests themselves) |
+| `resources/application.yml` | Default service URLs |
 
 Step classes only ever call `ApiClient`, never RestAssured directly, and never hardcode a base
-URL — always go through `TestProperties`.
+URL—always go through `TestProperties`.
 
 ## Troubleshooting
 
@@ -107,5 +97,5 @@ URL — always go through `TestProperties`.
   isn't where `TestProperties` expects it (`src/test/resources/application.yml`), or a
   clean/rebuild is needed so it gets copied into `target/test-classes`.
 - **`UndefinedStepException` / all steps undefined at once** — almost always a mismatch between
-  the `GLUE_PROPERTY_NAME` value in `CucumberTest.java` and the actual `package` declared in the
-  step classes under `steps/`. Both must be exactly `com.gym.crm.bdd.steps`.
+  the `GLUE_PROPERTY_NAME` value in `CucumberRunner.java` and the actual `package` declared in the
+  step classes under `steps`. Both must be exactly `com.gym.crm.bdd.steps`.
