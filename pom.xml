@@ -15,7 +15,7 @@
         <module>workload-service</module>
         <module>discovery-server</module>
         <module>gateway-service</module>
-        <module>bdd-tests</module>
+        <module>gym-automation</module>
     </modules>
 
     <groupId>com.gym.crm.platform</groupId>

@@ -4,15 +4,13 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
 
+@RequiredArgsConstructor
 public class ApiClient {
     private final String baseUrl;
-
-    public ApiClient(String baseUrl) {
-        this.baseUrl = baseUrl;
-    }
 
     public Response get(String path, String token, Map<String, ?> queryParams) {
         return request(token)

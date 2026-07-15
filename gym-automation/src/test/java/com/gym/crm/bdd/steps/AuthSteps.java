@@ -7,17 +7,14 @@ import com.gym.crm.bdd.support.TestContext;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
 import io.restassured.response.Response;
+import lombok.RequiredArgsConstructor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@RequiredArgsConstructor
 public class AuthSteps {
     private final TestContext context;
-    private final ApiClient coreClient;
-
-    public AuthSteps(TestContext context) {
-        this.context = context;
-        this.coreClient = new ApiClient(TestProperties.coreBaseUrl());
-    }
+    private final ApiClient coreClient = new ApiClient(TestProperties.coreBaseUrl());
 
     @Given("an authenticated gym user")
     public void anAuthenticatedGymUser() {

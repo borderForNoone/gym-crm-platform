@@ -1,12 +1,12 @@
 package com.gym.crm.bdd.support;
 
+import lombok.experimental.UtilityClass;
+
 import java.time.LocalDate;
 import java.util.Map;
 
+@UtilityClass
 public final class Payloads {
-    private Payloads() {
-    }
-
     public static Map<String, Object> login(String username, String password) {
         return Map.of("username", username, "password", password);
     }

@@ -10,7 +10,7 @@
     </parent>
 
     <groupId>com.gym.crm.bdd</groupId>
-    <artifactId>bdd-tests</artifactId>
+    <artifactId>gym-automation</artifactId>
     <packaging>jar</packaging>
     <name>bdd-tests</name>
     <description>
@@ -71,6 +71,16 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
