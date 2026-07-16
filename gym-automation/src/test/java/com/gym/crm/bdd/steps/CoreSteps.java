@@ -21,8 +21,8 @@ public class CoreSteps {
     private final TestContext context;
     private final ApiClient coreClient = new ApiClient(TestProperties.coreBaseUrl());
 
-    @When("a trainee is registered through core service")
-    public void aTraineeIsRegisteredThroughCoreService() {
+    @When("trainee is registered through core service")
+    public void traineeIsRegisteredThroughCoreService() {
         registerTrainee();
     }
 

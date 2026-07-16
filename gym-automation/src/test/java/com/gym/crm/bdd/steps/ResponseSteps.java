@@ -10,19 +10,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ResponseSteps {
     private final TestContext context;
 
-    @Then("the response status is {int}")
-    public void theResponseStatusIs(int status) {
+    @Then("response status is {int}")
+    public void responseStatusIs(int status) {
         assertThat(context.getLastResponse().statusCode()).isEqualTo(status);
     }
 
-    @Then("the response contains generated credentials")
-    public void theResponseContainsGeneratedCredentials() {
+    @Then("response contains generated credentials")
+    public void responseContainsGeneratedCredentials() {
         assertThat(context.getLastResponse().jsonPath().getString("username")).isNotBlank();
         assertThat(context.getLastResponse().jsonPath().getString("password")).isNotBlank();
     }
 
-    @Then("the response contains an error body")
-    public void theResponseContainsAnErrorBody() {
+    @Then("response contains an error body")
+    public void responseContainsAnErrorBody() {
         assertThat(context.getLastResponse().jsonPath().getString("errorMessage")).isNotBlank();
     }
 }

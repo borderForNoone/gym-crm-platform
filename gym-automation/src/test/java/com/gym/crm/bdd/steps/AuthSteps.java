@@ -12,14 +12,13 @@ public class AuthSteps {
     private final TestContext context;
     private final ApiClient coreClient = new ApiClient(TestProperties.coreBaseUrl());
 
-    @When("the user logs in with valid credentials")
-    public void theUserLogsInWithValidCredentials() {
-        context.setLastResponse(coreClient.post("/auth/login", null, Payloads.login(context.getString("traineeUsername"),
-                context.getString("traineePassword"))));
+    @When("user logs in with valid credentials")
+    public void userLogsInWithValidCredentials() {
+        context.setLastResponse(coreClient.post("/auth/login", null, Payloads.login(context.getString("traineeUsername"), context.getString("traineePassword"))));
     }
 
-    @When("the user logs in with invalid password")
-    public void loginWithInvalidPassword() {
+    @When("user logs in with invalid password")
+    public void userLogsInWithInvalidPassword() {
         context.setLastResponse(coreClient.post("/auth/login", null, Payloads.login(context.getString("traineeUsername"), "wrong-password")));
     }
 }

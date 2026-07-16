@@ -1,4 +1,4 @@
-# bdd-tests
+# gym-automation
 
 Component and integration BDD tests (Cucumber) for `gym-core-service` and `workload-service`.
 
@@ -28,7 +28,7 @@ require a live environment.
 ### From the console (Maven)
 
 ```bash
-mvn test -pl bdd-tests -DskipBddTests=false
+mvn test -pl gym-automation -DskipBddTests=false
 ```
 
 ### From the IDE
@@ -43,7 +43,7 @@ needed.
 Every scenario is tagged. Filter by tag with the standard Cucumber JUnit Platform property:
 
 ```bash
-mvn test -pl bdd-tests -DskipBddTests=false -Dcucumber.filter.tags="@core"
+mvn test -pl gym-automation -DskipBddTests=false -Dcucumber.filter.tags="@core"
 ```
 
 Available tags: `@component`, `@core`, plus one per scenario (e.g. `@trainee-register`,
@@ -67,7 +67,7 @@ system:
 Override them for a one-off run using system properties:
 
 ```bash
-mvn test -pl bdd-tests -DskipBddTests=false \
+mvn test -pl gym-automation -DskipBddTests=false \
   -Dsystem.tests.core.base-url=http://staging-host:8080/api/v1 \
   -Dsystem.tests.workload.base-url=http://staging-host:8082/workload-service/api/v1
 ```
