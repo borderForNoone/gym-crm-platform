@@ -40,7 +40,7 @@ public class TrainerWorkloadMessageListener {
             log.info("Received workload event trainer={} action={} txId={}", request != null ? request.getTrainerUsername() : null,
                     request != null ? request.getActionType() : null, transactionId);
             validate(request);
-            process(request, transactionId);
+            process(request);
         } catch (InvalidWorkloadMessageException | WorkloadMessageProcessingException e) {
             handleToDlq(request, transactionId, e.getMessage());
         } catch (Exception e) {
@@ -51,7 +51,7 @@ public class TrainerWorkloadMessageListener {
         }
     }
 
-    private void process(TrainerWorkloadRequest request, String transactionId) {
+    private void process(TrainerWorkloadRequest request) {
         try {
             trainerWorkloadService.updateTrainerWorkload(request);
         } catch (Exception e) {
