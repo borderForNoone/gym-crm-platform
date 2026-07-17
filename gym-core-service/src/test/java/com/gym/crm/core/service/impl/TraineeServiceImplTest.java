@@ -20,6 +20,7 @@ import com.gym.crm.core.search.filter.TraineeTrainingFilter;
 import com.gym.crm.core.service.UserProfileService;
 import com.gym.crm.core.service.common.CoreValidator;
 import com.gym.crm.core.service.common.UserInputValidator;
+import com.gym.crm.core.client.workload.WorkloadEventPublisher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -64,6 +65,8 @@ class TraineeServiceImplTest {
     private UserInputValidator userInputValidator;
     @Mock
     private WorkloadRequestMapper requestMapper;
+    @Mock
+    private WorkloadEventPublisher workloadEventPublisher;
     @Mock
     private ApplicationEventPublisher publisher;
     @InjectMocks
@@ -114,6 +117,28 @@ class TraineeServiceImplTest {
         assertThat(result).isNotNull();
         verify(userInputValidator).validate(dto, "Trainee");
         verify(traineeRepository).save(any());
+    }
+
+    @Test
+    void deleteByUsername_shouldPublishDeleteWorkloadEventsAndDeleteTrainee() {
+        String username = "trainee.user";
+        User trainerUser = User.builder().username("trainer.user").firstName("John").lastName("Doe").isActive(true).build();
+        Trainer trainer = Trainer.builder().user(trainerUser).build();
+        Training training = Training.builder().trainer(trainer).trainingDuration(60).trainingDate(java.time.LocalDate.of(2026, 7, 17)).build();
+        Trainee trainee = Trainee.builder().user(User.builder().username(username).build()).build();
+
+        TraineeInfoDTO dto = mock(TraineeInfoDTO.class);
+
+        when(traineeRepository.findByUser_Username(username)).thenReturn(Optional.of(trainee));
+        when(trainingRepository.findTraineeTrainings(username, null, null)).thenReturn(List.of(training));
+        when(mapper.toInfoDto(trainee)).thenReturn(dto);
+
+        TraineeInfoDTO result = service.deleteByUsername(username);
+
+        assertThat(result).isNotNull();
+        verify(trainingRepository).findTraineeTrainings(username, null, null);
+        verify(workloadEventPublisher).publish(any());
+        verify(traineeRepository).delete(trainee);
     }
 
     @Test
