@@ -8,7 +8,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.gym.crm.rest.ErrorResponse;
 import org.gym.crm.rest.TrainingCreateRequest;
 import org.gym.crm.rest.TrainingTypeResponse;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Slf4j
 @Tag(name = "Training", description = "Operations related to trainings")
 @RestController
 @RequestMapping("${app.api.base-path}/trainings")
@@ -48,7 +51,8 @@ public class TrainingController {
                     ))
     })
     @PostMapping
-    public ResponseEntity<Void> addTraining(@RequestBody TrainingCreateRequest request) {
+    public ResponseEntity<Void> addTraining(@Valid @RequestBody TrainingCreateRequest request) {
+        log.info("duration={}", request.getTrainingDuration());
         facade.createTraining(request);
 
         return ResponseEntity.ok().build();

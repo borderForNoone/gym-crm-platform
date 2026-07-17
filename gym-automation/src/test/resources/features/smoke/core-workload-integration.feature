@@ -14,7 +14,7 @@ Feature: Core and workload service integration
       | lastName       | User        |
       | specialization | Yoga        |
     Then response status is 200
-    Given registered trainee is authenticated
+    Given registered trainer is authenticated
     When training is created through core service with details
       | trainingName     | Integration Training |
       | trainingDate     | today                |
@@ -35,7 +35,7 @@ Feature: Core and workload service integration
       | lastName       | DeleteUser  |
       | specialization | Yoga        |
     Then response status is 200
-    Given registered trainee is authenticated
+    Given registered trainer is authenticated
     When training is created through core service with details
       | trainingName     | Delete Flow Training |
       | trainingDate     | today                |
@@ -45,3 +45,24 @@ Feature: Core and workload service integration
     When trainee is deleted through core service
     Then response status is 200
     And workload service eventually contains trainer duration 0
+
+  @training-create @workload-not-updated @negative
+    Scenario: Rejected training creation does not update trainer workload
+      When trainee is registered through core service with details
+        | firstName   | FlowTrainee  |
+        | lastName    | NegativeUser |
+        | dateOfBirth | 2000-03-22   |
+        | address     | 422 Oak St   |
+      Then response status is 200
+      When trainer is registered through core service with details
+        | firstName      | FlowTrainer  |
+        | lastName       | NegativeUser |
+        | specialization | Yoga         |
+      Then response status is 200
+      Given registered trainee is authenticated
+      When invalid training is created through core service with details
+        | trainingName     | Invalid Integration Training |
+        | trainingDate     | today                        |
+        | trainingDuration | 0                            |
+      Then response status is 400
+      And workload service eventually does not contain trainer workload

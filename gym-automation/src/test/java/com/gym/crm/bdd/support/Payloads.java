@@ -3,6 +3,7 @@ package com.gym.crm.bdd.support;
 import lombok.experimental.UtilityClass;
 
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.gym.crm.bdd.support.PayloadField.ADDRESS;
@@ -39,6 +40,30 @@ public final class Payloads {
                 "trainingDuration", duration);
     }
 
+    public static Map<String, Object> createTrainingPayload(String traineeUsername, String trainerUsername, Map<String, String> details) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("traineeUsername", traineeUsername);
+        payload.put("trainerUsername", trainerUsername);
+        payload.put("trainingName", details.get("trainingName"));
+        payload.put("trainingDate", parseTrainingDate(details.get("trainingDate")));
+        payload.put("trainingDuration", parseDurationOrRaw(details.get("trainingDuration")));
+
+        return payload;
+    }
+
+    private static Object parseTrainingDate(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        return switch (value.toLowerCase()) {
+            case "today" -> LocalDate.now().toString();
+            case "tomorrow" -> LocalDate.now().plusDays(1).toString();
+            case "yesterday" -> LocalDate.now().minusDays(1).toString();
+            default -> value;
+        };
+    }
+
     public static Map<String, Object> workload(String trainerUsername, int duration) {
         return Map.of("trainerUsername", trainerUsername,
                 "trainerFirstName", "System",
@@ -67,5 +92,17 @@ public final class Payloads {
                 "trainingDuration", 45,
                 "actionType", "ADD"
         );
+    }
+
+    private static Object parseDurationOrRaw(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return value;
+        }
     }
 }

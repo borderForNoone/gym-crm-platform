@@ -28,6 +28,14 @@ Feature: Workload service component API
     When invalid trainer workload message is sent
     Then workload message is moved to DLQ
 
+  @workload-edge-case @edge-case
+    Scenario: Return not found for missing trainer workload
+      Given gym user is registered
+      And gym user is authenticated
+      When missing trainer monthly workload is requested through workload service
+      Then response status is 404
+      And response contains error body
+
   @workload-security
   Scenario: Reject unauthorized workload request
     When trainer workload is requested without authorization

@@ -4,6 +4,7 @@ import com.gym.crm.bdd.client.ApiClient;
 import com.gym.crm.bdd.config.TestProperties;
 import com.gym.crm.bdd.support.Payloads;
 import com.gym.crm.bdd.support.TestContext;
+import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
 import io.restassured.path.json.JsonPath;
@@ -38,11 +39,10 @@ public class CoreSteps {
     }
 
     @Given("authenticated gym user")
-    public void anAuthenticatedGymUser() {
+    public void authenticatedGymUser() {
         aGymUserIsRegistered();
         theGymUserIsAuthenticated();
     }
-
 
     @Given("gym user is registered")
     public void aGymUserIsRegistered() {
@@ -75,25 +75,34 @@ public class CoreSteps {
             }
         }
 
-        Response response = coreClient.post("/auth/login", null, Payloads.login(username, password));
-        assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
-        context.setToken(response.jsonPath().getString("token"));
-        System.out.println("=== AUTH ===");
-        System.out.println("Authenticated as: " + username);
-        System.out.println("Token: " + context.getToken());
-        assertThat(context.getToken()).isNotBlank();
+        login(username, password);
     }
+
 
     @Given("trainer is authenticated")
     public void trainerIsAuthenticated() {
         String username = context.getString("trainerUsername");
         String password = context.getString("trainerPassword");
-        Response response = coreClient.post("/auth/login", null, Payloads.login(username, password));
 
-        assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
+        assertThat(username).as("Trainer username exists").isNotBlank();
+        assertThat(password).as("Trainer password exists").isNotBlank();
 
-        context.setToken(response.jsonPath().getString("token"));
+        login(username, password);
     }
+
+    private void login(String username, String password) {
+        assertThat(username).as("Username should exist").isNotBlank();
+        assertThat(password).as("Password should exist").isNotBlank();
+
+        Response response = coreClient.post("/auth/login", null, Payloads.login(username, password));
+        context.setLastResponse(response);
+
+        assertThat(response.statusCode()).as("Login should return 200. Response: %s", response.asString()).isEqualTo(HttpStatus.OK.value());
+        String token = response.jsonPath().getString("token");
+        assertThat(token).as("JWT token should exist").isNotBlank();
+        context.setToken(token);
+    }
+
 
     @Given("trainer and trainee are registered")
     public void trainerAndTraineeAreRegistered() {
@@ -106,18 +115,17 @@ public class CoreSteps {
         String trainerUsername = context.getString("trainerUsername");
         String traineeUsername = context.getString("traineeUsername");
 
-        assertThat(trainerUsername).as("Trainer username should be stored in context").isNotBlank();
-        assertThat(traineeUsername).as("Trainee username should be stored in context").isNotBlank();
+        assertThat(context.getToken()).as("JWT token should exist").isNotBlank();
 
-        Response response = coreClient.post("/trainings", context.getToken(), Payloads.training(traineeUsername,
-                trainerUsername, 45));
+        Response response = coreClient.post("/trainings", context.getToken(), Payloads.training(traineeUsername, trainerUsername, 45));
 
         context.setLastResponse(response);
     }
 
+
     @When("trainee is registered through core service with details")
     public void traineeIsRegisteredThroughCoreServiceWithDetails(Map<String, String> details) {
-        Response response = coreClient.post("/trainees/register", null, Payloads.createTraineePayload(details));
+        Response response = coreClient.post("/trainees/register", null, Payloads.createTraineePayload(withUniqueLastName(details)));
 
         context.setLastResponse(response);
 
@@ -128,33 +136,41 @@ public class CoreSteps {
 
     @When("trainer is registered through core service with details")
     public void trainerIsRegisteredThroughCoreServiceWithDetails(Map<String, String> details) {
-        Response response = coreClient.post("/trainers/register", null, Map.of("firstName", details.get("firstName"),
-                "lastName", details.get("lastName"), "specialization", details.get("specialization")));
+        Map<String, String> unique = withUniqueLastName(details);
+
+        Response response = coreClient.post("/trainers/register", null, Map.of("firstName", unique.get("firstName"),
+                "lastName", unique.get("lastName"), "specialization", unique.get("specialization")));
 
         context.setLastResponse(response);
 
         JsonPath json = response.jsonPath();
-
         context.put("trainerUsername", json.getString(USERNAME));
         context.put("trainerPassword", json.getString(PASSWORD));
     }
 
     @When("training is created through core service with details")
-    public void trainingIsCreatedThroughCoreServiceWithDetails(Map<String, String> details) {
+    public void trainingIsCreatedThroughCoreServiceWithDetails(Map<String,String> details) {
         String trainingDate = details.get("trainingDate");
 
         if ("today".equalsIgnoreCase(trainingDate)) {
             trainingDate = LocalDate.now().toString();
         }
 
+        assertThat(context.getToken()).as("JWT token should exist").isNotBlank();
+
         Response response = coreClient.post("/trainings", context.getToken(), Map.of("traineeUsername", context.getString("traineeUsername"),
-                "trainerUsername", context.getString("trainerUsername"),
-                "trainingName", details.get("trainingName"),
-                "trainingDate", trainingDate,
-                "trainingDuration",
-                Integer.parseInt(details.get("trainingDuration"))));
+                "trainerUsername", context.getString("trainerUsername"), "trainingName", details.get("trainingName"),
+                "trainingDate", trainingDate, "trainingDuration", Integer.parseInt(details.get("trainingDuration"))));
 
         context.setLastResponse(response);
+    }
+
+    @When("invalid training is created through core service with details")
+    public void invalidTrainingIsCreatedThroughCoreServiceWithDetails(DataTable table) {
+        Map<String, String> details = table.asMap(String.class, String.class);
+
+        context.setLastResponse(coreClient.post("/trainings", context.getToken(), Payloads.createTrainingPayload(context.getString("traineeUsername"),
+                context.getString("trainerUsername"), details)));
     }
 
     @When("trainee is deleted through core service")
@@ -177,36 +193,37 @@ public class CoreSteps {
 
         assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
 
-        JsonPath json = response.jsonPath();
-        context.put("traineeUsername", json.getString(USERNAME));
-        context.put("traineePassword", json.getString(PASSWORD));
+        storeCredentials("trainee", response);
     }
 
     private void registerTrainerUser() {
         Response response = coreClient.post("/trainers/register", null, Payloads.trainer(uniqueFirstName("Trainer"), uniqueLastName("User"),
-                        "Cardio"));
+                "Cardio"));
+
 
         assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
 
-        JsonPath json = response.jsonPath();
-        context.put("trainerUsername", json.getString(USERNAME));
-        context.put("trainerPassword", json.getString(PASSWORD));
+        storeCredentials("trainer", response);
     }
 
-
     private void storeCredentials(String prefix, Response response) {
-        if (response.statusCode() != HttpStatus.OK.value()) {
-            return;
-        }
-
         JsonPath json = response.jsonPath();
 
         context.put(prefix + "Username", json.getString(USERNAME));
         context.put(prefix + "Password", json.getString(PASSWORD));
     }
 
+    private Map<String, String> withUniqueLastName(Map<String, String> details) {
+        Map<String, String> copy = new java.util.HashMap<>(details);
+        String uniqueLastName = details.get("lastName") + (System.nanoTime() % 100000);
+
+        copy.put("lastName", uniqueLastName);
+
+        return copy;
+    }
+
     private String uniqueFirstName(String name) {
-        return (name + (System.nanoTime() % 100000)).toLowerCase(Locale.ROOT);
+        return name.toLowerCase(Locale.ROOT);
     }
 
     private String uniqueLastName(String prefix) {

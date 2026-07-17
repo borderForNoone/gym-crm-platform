@@ -37,16 +37,21 @@ public class WorkloadSteps {
         LocalDate trainingDate = LocalDate.now();
         String trainerUsername = context.getString("trainerUsername");
 
-        context.put("trainerUsername", trainerUsername);
+        context.put(TRAINER_USERNAME, trainerUsername);
         context.put(TRAINING_YEAR, trainingDate.getYear());
         context.put(TRAINING_MONTH, trainingDate.getMonthValue());
 
-        Map<String, Object> message = Map.of("trainerUsername", trainerUsername, "trainingDate", trainingDate.toString(), "trainingDuration", 45,
-                "actionType", "ADD");
+        Map<String, Object> message = new LinkedHashMap<>();
+        message.put("trainerUsername", trainerUsername);
+        message.put("trainerFirstName", "System");
+        message.put("trainerLastName", "Trainer");
+        message.put("isActive", true);
+        message.put("trainingDate", trainingDate.toString());
+        message.put("trainingDuration", 45);
+        message.put("actionType", "ADD");
 
         try {
             String json = OBJECT_MAPPER.writeValueAsString(message);
-
             jmsClient.sendText(WORKLOAD_QUEUE, json, Map.of("_type", "TrainerWorkloadRequest"));
         } catch (Exception e) {
             throw new IllegalStateException(e);
@@ -96,12 +101,14 @@ public class WorkloadSteps {
                 .untilAsserted(() -> {
                     String username = context.getString(TRAINER_USERNAME);
                     String path = "/trainer-workloads/" + username;
-                    Map<String, Object> params = Map.of("year", context.getString(TRAINING_YEAR), "month", context.getString(TRAINING_MONTH));
+                    Map<String, Object> params = Map.of("year", context.getString(TRAINING_YEAR),
+                            "month", context.getString(TRAINING_MONTH));
 
-                    var response = workloadClient.get(path, context.getToken(), params);
+                    Response response = workloadClient.get(path, context.getToken(), params);
 
                     assertThat(response.statusCode()).isEqualTo(200);
-                    assertThat(response.jsonPath().getInt("duration")).isEqualTo(180);
+                    int actualDuration = Integer.parseInt(response.asString().trim());
+                    assertThat(actualDuration).isEqualTo(45);
                 });
     }
 
@@ -135,12 +142,35 @@ public class WorkloadSteps {
                 .atMost(Duration.ofSeconds(10))
                 .pollInterval(Duration.ofMillis(500))
                 .untilAsserted(() -> {
-                    Response response = workloadClient.get("/trainer-workloads/" + trainerUsername, context.getToken(), Map.of("year", now.getYear(),
-                            "month", now.getMonthValue()));
+                    Response response = workloadClient.get("/trainer-workloads/" + trainerUsername, context.getToken(),
+                            Map.of("year", now.getYear(), "month", now.getMonthValue()));
 
                     assertThat(response.statusCode()).isEqualTo(200);
-                    Integer actualDuration = response.jsonPath().getInt("years[0].months[0].trainingSummaryDuration");
+
+                    int actualDuration = Integer.parseInt(response.asString().trim());
                     assertThat(actualDuration).isEqualTo(duration);
                 });
+    }
+
+
+    @Then("workload service eventually does not contain trainer workload")
+    public void workloadServiceEventuallyDoesNotContainTrainerWorkload() {
+        String trainerUsername = context.getString("trainerUsername");
+
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(10))
+                .pollInterval(Duration.ofSeconds(1))
+                .untilAsserted(() -> assertTrainerWorkloadNotFound(trainerUsername));
+    }
+
+    @When("missing trainer monthly workload is requested through workload service")
+    public void missingTrainerMonthlyWorkloadIsRequestedThroughWorkloadService() {
+        context.setLastResponse(workloadClient.get("/trainer-workloads/missing.trainer", context.getToken(), Map.of("year", LocalDate.now().getYear(), "month", LocalDate.now().getMonthValue())));
+    }
+
+    private void assertTrainerWorkloadNotFound(String trainerUsername) {
+        var response = workloadClient.get("/trainer-workloads/" + trainerUsername, context.getToken(), Map.of("year", LocalDate.now().getYear(), "month", LocalDate.now().getMonthValue()));
+
+        assertThat(response.statusCode()).isEqualTo(404);
     }
 }

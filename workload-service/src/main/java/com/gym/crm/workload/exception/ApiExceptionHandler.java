@@ -1,17 +1,20 @@
 package com.gym.crm.workload.exception;
 
+import gym.crm.platform.workload.openapi.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
     @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<Map<String, String>> handleNoSuchElement(NoSuchElementException exception) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", exception.getMessage()));
+    public ResponseEntity<ErrorResponse> handleNoSuchElement(NoSuchElementException exception) {
+        ErrorResponse error = new ErrorResponse().errorCode(HttpStatus.NOT_FOUND.value())
+                .errorMessage(exception.getMessage());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 }

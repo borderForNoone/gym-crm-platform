@@ -1,11 +1,11 @@
 package com.gym.crm.workload.exception;
 
+import gym.crm.platform.workload.openapi.ErrorResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,7 +22,7 @@ class ApiExceptionHandlerTest {
     void shouldReturn404WhenNoSuchElementExceptionThrown() {
         NoSuchElementException exception = new NoSuchElementException("Trainer workload not found");
 
-        ResponseEntity<Map<String, String>> response = handler.handleNoSuchElement(exception);
+        ResponseEntity<ErrorResponse> response = handler.handleNoSuchElement(exception);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
@@ -31,15 +31,28 @@ class ApiExceptionHandlerTest {
     void shouldReturnExceptionMessage() {
         String message = "Trainer workload not found: trainer.user";
 
-        ResponseEntity<Map<String, String>> response = handler.handleNoSuchElement(new NoSuchElementException(message));
+        ResponseEntity<ErrorResponse> response = handler.handleNoSuchElement(new NoSuchElementException(message));
 
-        assertThat(response.getBody()).containsEntry("message", message);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getErrorMessage()).isEqualTo(message);
     }
 
     @Test
-    void shouldContainOnlyMessageField() {
-        ResponseEntity<Map<String, String>> response = handler.handleNoSuchElement(new NoSuchElementException("error"));
+    void shouldReturnErrorCode() {
+        ResponseEntity<ErrorResponse> response = handler.handleNoSuchElement(new NoSuchElementException("error"));
 
-        assertThat(response.getBody()).hasSize(1).containsKey("message");
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getErrorCode()).isEqualTo(HttpStatus.NOT_FOUND.value());
+    }
+
+    @Test
+    void shouldReturnErrorResponseBody() {
+        String message = "Trainer workload not found";
+
+        ResponseEntity<ErrorResponse> response = handler.handleNoSuchElement(new NoSuchElementException(message));
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getErrorMessage()).isEqualTo(message);
+        assertThat(response.getBody().getErrorCode()).isEqualTo(HttpStatus.NOT_FOUND.value());
     }
 }
