@@ -4,7 +4,6 @@ import com.gym.crm.workload.exception.InvalidWorkloadMessageException;
 import com.gym.crm.workload.exception.WorkloadMessageProcessingException;
 import com.gym.crm.workload.service.TrainerWorkloadService;
 import gym.crm.platform.workload.openapi.TrainerWorkloadRequest;
-import io.micrometer.common.util.StringUtils;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
 import jakarta.validation.ConstraintViolation;
@@ -55,7 +54,6 @@ public class TrainerWorkloadMessageListener {
     private void process(TrainerWorkloadRequest request, String transactionId) {
         try {
             trainerWorkloadService.updateTrainerWorkload(request);
-            log.info("Workload processed successfully trainer={} txId={}", request.getTrainerUsername(), transactionId);
         } catch (Exception e) {
             throw new WorkloadMessageProcessingException("Failed to update trainer workload", e);
         }

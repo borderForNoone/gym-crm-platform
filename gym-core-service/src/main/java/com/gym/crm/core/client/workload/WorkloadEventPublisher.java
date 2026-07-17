@@ -9,7 +9,6 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.JmsException;
 import org.springframework.jms.core.JmsTemplate;
-import org.springframework.jms.core.MessagePostProcessor;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -32,7 +31,7 @@ public class WorkloadEventPublisher {
         try {
             jmsTemplate.convertAndSend(destination, request, message -> withTransactionId(message, transactionId));
             log.info("Workload event published for trainer={} action={} txId={}", request.getTrainerUsername(), request.getActionType(), transactionId);
-        } catch (JmsException exception) {
+        }  catch (JmsException exception) {
             log.error("Failed to publish workload event for trainer={} action={} txId={} message={}", request.getTrainerUsername(), request.getActionType(), transactionId, exception.getMessage());
             throw exception;
         }

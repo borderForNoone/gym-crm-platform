@@ -24,6 +24,10 @@ public class ApiClient {
                 .post(baseUrl + path);
     }
 
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+
     public Response put(String path, String token, Object body) {
         return request(token)
                 .body(body)

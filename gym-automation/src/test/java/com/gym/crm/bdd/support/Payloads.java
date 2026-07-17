@@ -36,4 +36,24 @@ public final class Payloads {
                 "trainingDuration", duration,
                 "actionType", "ADD");
     }
+
+    public static Map<String, Object> workloadWithoutUsername(int duration) {
+        return Map.of("trainerFirstName", "System",
+                "trainerLastName", "Trainer",
+                "isActive", true,
+                "trainingDate", LocalDate.now().toString(),
+                "trainingDuration", duration,
+                "actionType", "ADD");
+    }
+
+    public static Map<String, Object> invalidTraining() {
+        return Map.of(
+                "trainerFirstName", "System",
+                "trainerLastName", "Trainer",
+                "isActive", true,
+                "trainingDate", LocalDate.now().plusDays(1).toString(),
+                "trainingDuration", 45,
+                "actionType", "ADD"
+        );
+    }
 }
