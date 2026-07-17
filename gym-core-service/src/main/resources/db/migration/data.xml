@@ -103,4 +103,13 @@
         </insert>
     </changeSet>
 
+    <changeSet id="GIA-79-reset-auto-increment" author="denys">
+        <sql>
+            ALTER TABLE users ALTER COLUMN id RESTART WITH 4;
+            ALTER TABLE trainees ALTER COLUMN id RESTART WITH 3;
+            ALTER TABLE trainers ALTER COLUMN id RESTART WITH 2;
+            ALTER TABLE training_types ALTER COLUMN id RESTART WITH 4;
+            ALTER TABLE trainings ALTER COLUMN id RESTART WITH 3;
+        </sql>
+    </changeSet>
 </databaseChangeLog>

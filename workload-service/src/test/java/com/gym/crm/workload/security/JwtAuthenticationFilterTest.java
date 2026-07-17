@@ -10,10 +10,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.io.IOException;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -93,5 +95,60 @@ class JwtAuthenticationFilterTest {
         verify(jwtService, never()).isTokenValid(any());
         verify(jwtService, never()).extractUsername(any());
         verify(blacklistService, never()).isBlacklisted(any());
+    }
+
+    @Test
+    @DisplayName("Should skip authentication when authorization header is not bearer")
+    void doFilterInternal_whenAuthorizationHeaderIsNotBearer_shouldSkipAuthentication() throws ServletException, IOException {
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtService, blacklistService);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        request.addHeader("Authorization", "Basic abc123");
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(jwtService, never()).isTokenValid(any());
+        verify(jwtService, never()).extractUsername(any());
+        verify(blacklistService, never()).isBlacklisted(any());
+    }
+
+    @Test
+    @DisplayName("Should not authenticate when authentication already exists")
+    void doFilterInternal_whenAlreadyAuthenticated_shouldNotAuthenticateAgain() throws ServletException, IOException {
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtService, blacklistService);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        request.addHeader("Authorization", "Bearer " + TOKEN);
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("existing-user", null, Collections.emptyList()));
+
+        when(jwtService.isTokenValid(TOKEN)).thenReturn(true);
+        when(blacklistService.isBlacklisted(TOKEN)).thenReturn(false);
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        verify(jwtService).isTokenValid(TOKEN);
+        verify(blacklistService).isBlacklisted(TOKEN);
+        verify(jwtService, never()).extractUsername(any());
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getPrincipal()).isEqualTo("existing-user");
+    }
+
+    @Test
+    @DisplayName("Should not authenticate when token is invalid")
+    void doFilterInternal_whenTokenIsInvalid_shouldNotAuthenticate() throws ServletException, IOException {
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtService, blacklistService);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        request.addHeader("Authorization", "Bearer " + TOKEN);
+
+        when(jwtService.isTokenValid(TOKEN)).thenReturn(false);
+        when(blacklistService.isBlacklisted(TOKEN)).thenReturn(false);
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(jwtService).isTokenValid(TOKEN);
+        verify(blacklistService).isBlacklisted(TOKEN);
+        verify(jwtService, never()).extractUsername(any());
     }
 }

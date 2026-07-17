@@ -2,39 +2,46 @@ spring:
   application:
     name: gym-core-service
   datasource:
-    url: jdbc:h2:mem:gym;DB_CLOSE_DELAY=-1
+    url: jdbc:h2:mem:gym;DB_CLOSE_DELAY=0;DB_CLOSE_ON_EXIT=true
     driver-class-name: org.h2.Driver
-    username: sa
-    password:
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: none
     properties:
       hibernate:
-        globally_quoted_identifiers: true
+        default_schema: PUBLIC
   liquibase:
-    enabled: false
+    enabled: true
+    change-log: classpath:db/migration/master.xml
   activemq:
-    broker-url: vm://localhost?broker.persistent=false
+    broker-url: tcp://localhost:61616
     user: gym
     password: gym
+  jms:
+    pub-sub-domain: false
   data:
     redis:
       repositories:
         enabled: false
 
 jwt:
-  secret: test-secret
+  secret: dGVzdC1zZWNyZXQtdGVzdC1zZWNyZXQtdGVzdC1zZWNyZXQtdGVzdC1zZWNyZXQ=
   expiration: 86400000
 
 server:
   port: 8080
+
+activemq:
+  destination:
+    trainer-workload: trainer-workload-queue
 
 workload:
   service:
     base-url: http://localhost:8082/workload-service
 
 app:
+  api:
+    base-path: /api/v1
   cors:
     allowed-origins: http://localhost:3000
 
@@ -42,3 +49,25 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+springdoc:
+  swagger-ui:
+    url: /gia-api.yml
+    path: /swagger-ui/index.html
+  api-docs:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: mappings
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  pattern:
+    level: "%5p [txId=%X{transactionId}]"

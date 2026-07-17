@@ -4,3 +4,7 @@ system:
       base-url: http://localhost:8080/api/v1
     workload:
       base-url: http://localhost:8082/workload-service/api/v1
+    jms:
+      broker-url: tcp://localhost:61616
+      user: gym
+      password: gym

@@ -36,9 +36,9 @@ public class JwtService {
 
     public boolean isTokenValid(String token) {
         try {
-            extractAllClaims(token);
+            Claims claims = extractAllClaims(token);
 
-            return true;
+            return claims.getExpiration().after(new Date());
         } catch (JwtException | IllegalArgumentException exception) {
             log.warn("Token validation failed: {}", exception.getMessage());
 

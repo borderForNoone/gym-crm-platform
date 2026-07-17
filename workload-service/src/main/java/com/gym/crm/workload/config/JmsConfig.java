@@ -1,5 +1,6 @@
 package com.gym.crm.workload.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.jms.ConnectionFactory;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.RedeliveryPolicy;
@@ -15,6 +16,7 @@ import org.springframework.jms.support.converter.MessageType;
 import org.springframework.util.ErrorHandler;
 
 import java.util.List;
+import java.util.Map;
 
 @Configuration
 public class JmsConfig {
@@ -77,13 +79,12 @@ public class JmsConfig {
     }
 
     @Bean
-    public MessageConverter messageConverter() {
+    public MessageConverter messageConverter(ObjectMapper objectMapper) {
         MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
+        converter.setObjectMapper(objectMapper);
         converter.setTargetType(MessageType.TEXT);
         converter.setTypeIdPropertyName("_type");
-        converter.setTypeIdMappings(java.util.Map.of(
-                "TrainerWorkloadRequest", gym.crm.platform.workload.openapi.TrainerWorkloadRequest.class
-        ));
+        converter.setTypeIdMappings(Map.of("TrainerWorkloadRequest", gym.crm.platform.workload.openapi.TrainerWorkloadRequest.class));
 
         return converter;
     }
