@@ -126,19 +126,14 @@ public class CoreSteps {
     }
 
     private void registerTrainerUser() {
-        Response response = coreClient.post("/trainers/register", null, Payloads.trainer(uniqueFirstName("Trainer"),
-                        uniqueLastName("User"),
+        Response response = coreClient.post("/trainers/register", null, Payloads.trainer(uniqueFirstName("Trainer"), uniqueLastName("User"),
                         "Cardio"));
 
         assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
 
         JsonPath json = response.jsonPath();
-
         context.put("trainerUsername", json.getString(USERNAME));
         context.put("trainerPassword", json.getString(PASSWORD));
-        System.out.println("REGISTERED TRAINER:");
-        System.out.println("username = " + context.getString("trainerUsername"));
-        System.out.println("password = " + context.getString("trainerPassword"));
     }
 
 

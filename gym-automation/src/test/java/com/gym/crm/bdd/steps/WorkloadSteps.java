@@ -77,8 +77,8 @@ public class WorkloadSteps {
     public void trainerWorkloadIsRequestedWithoutAuthorization() {
         LocalDate now = LocalDate.now();
 
-        context.setLastResponse(workloadClient.get("/trainer-workloads/system.trainer", null,
-                Map.of("year", now.getYear(), "month", now.getMonthValue())));
+        context.setLastResponse(workloadClient.get("/trainer-workloads/system.trainer", null, Map.of("year", now.getYear(),
+                "month", now.getMonthValue())));
     }
 
     @Then("workload message is processed")

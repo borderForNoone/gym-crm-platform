@@ -14,6 +14,9 @@
 
     <properties>
         <jsonwebtoken.version>0.12.6</jsonwebtoken.version>
+        <sonar.coverage.exclusions>
+            **/config/**
+        </sonar.coverage.exclusions>
     </properties>
 
     <dependencies>
