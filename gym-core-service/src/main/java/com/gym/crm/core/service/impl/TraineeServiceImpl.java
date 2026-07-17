@@ -1,6 +1,9 @@
 package com.gym.crm.core.service.impl;
 
+import com.gym.crm.core.client.workload.WorkloadEventPublisher;
 import com.gym.crm.core.client.workload.WorkloadRequestMapper;
+import com.gym.crm.core.client.workload.model.ActionType;
+import com.gym.crm.core.client.workload.model.TrainerWorkloadRequest;
 import com.gym.crm.core.facade.dto.CreatedTrainee;
 import com.gym.crm.core.facade.dto.TraineeInfoDTO;
 import com.gym.crm.core.facade.dto.TraineeResponseDTO;
@@ -47,6 +50,7 @@ public class TraineeServiceImpl implements TraineeService {
     private final TrainerMapper trainerMapper;
     private final CoreValidator validator;
     private final UserInputValidator userInputValidator;
+    private final WorkloadEventPublisher workloadEventPublisher;
 
     @Transactional
     @Override
@@ -120,9 +124,31 @@ public class TraineeServiceImpl implements TraineeService {
     public TraineeInfoDTO deleteByUsername(String username) {
         userInputValidator.validateUsername(username);
 
-        Trainee trainee = traineeRepository.findByUser_Username(username).orElseThrow(() -> new EntityNotFoundException("Trainee not found"));
+        Trainee trainee = traineeRepository.findByUser_Username(username)
+                .orElseThrow(() -> new EntityNotFoundException("Trainee not found"));
+        List<Training> trainings = trainingRepository.findTraineeTrainings(
+                username,
+                null,
+                null
+        );
+
+        for (Training training : trainings) {
+            Trainer trainer = training.getTrainer();
+
+            workloadEventPublisher.publish(
+                    new TrainerWorkloadRequest()
+                            .trainerUsername(trainer.getUser().getUsername())
+                            .trainerFirstName(trainer.getUser().getFirstName())
+                            .trainerLastName(trainer.getUser().getLastName())
+                            .isActive(trainer.getUser().getIsActive())
+                            .trainingDate(training.getTrainingDate())
+                            .trainingDuration(training.getTrainingDuration())
+                            .actionType(ActionType.DELETE)
+            );
+        }
 
         TraineeInfoDTO dto = mapper.toInfoDto(trainee);
+
         traineeRepository.delete(trainee);
 
         return dto;

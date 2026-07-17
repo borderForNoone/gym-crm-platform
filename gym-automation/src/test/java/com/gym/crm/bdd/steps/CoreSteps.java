@@ -11,6 +11,7 @@ import io.restassured.response.Response;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
+import java.time.LocalDate;
 import java.util.Locale;
 import java.util.Map;
 
@@ -77,6 +78,9 @@ public class CoreSteps {
         Response response = coreClient.post("/auth/login", null, Payloads.login(username, password));
         assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
         context.setToken(response.jsonPath().getString("token"));
+        System.out.println("=== AUTH ===");
+        System.out.println("Authenticated as: " + username);
+        System.out.println("Token: " + context.getToken());
         assertThat(context.getToken()).isNotBlank();
     }
 
@@ -102,7 +106,60 @@ public class CoreSteps {
         String trainerUsername = context.getString("trainerUsername");
         String traineeUsername = context.getString("traineeUsername");
 
-        Response response = coreClient.post("/trainings", context.getToken(), Payloads.training(traineeUsername, trainerUsername, 45));
+        assertThat(trainerUsername).as("Trainer username should be stored in context").isNotBlank();
+        assertThat(traineeUsername).as("Trainee username should be stored in context").isNotBlank();
+
+        Response response = coreClient.post("/trainings", context.getToken(), Payloads.training(traineeUsername,
+                trainerUsername, 45));
+
+        context.setLastResponse(response);
+    }
+
+    @When("trainee is registered through core service with details")
+    public void traineeIsRegisteredThroughCoreServiceWithDetails(Map<String, String> details) {
+        Response response = coreClient.post("/trainees/register", null, Payloads.createTraineePayload(details));
+
+        context.setLastResponse(response);
+
+        JsonPath json = response.jsonPath();
+        context.put("traineeUsername", json.getString(USERNAME));
+        context.put("traineePassword", json.getString(PASSWORD));
+    }
+
+    @When("trainer is registered through core service with details")
+    public void trainerIsRegisteredThroughCoreServiceWithDetails(Map<String, String> details) {
+        Response response = coreClient.post("/trainers/register", null, Map.of("firstName", details.get("firstName"),
+                "lastName", details.get("lastName"), "specialization", details.get("specialization")));
+
+        context.setLastResponse(response);
+
+        JsonPath json = response.jsonPath();
+
+        context.put("trainerUsername", json.getString(USERNAME));
+        context.put("trainerPassword", json.getString(PASSWORD));
+    }
+
+    @When("training is created through core service with details")
+    public void trainingIsCreatedThroughCoreServiceWithDetails(Map<String, String> details) {
+        String trainingDate = details.get("trainingDate");
+
+        if ("today".equalsIgnoreCase(trainingDate)) {
+            trainingDate = LocalDate.now().toString();
+        }
+
+        Response response = coreClient.post("/trainings", context.getToken(), Map.of("traineeUsername", context.getString("traineeUsername"),
+                "trainerUsername", context.getString("trainerUsername"),
+                "trainingName", details.get("trainingName"),
+                "trainingDate", trainingDate,
+                "trainingDuration",
+                Integer.parseInt(details.get("trainingDuration"))));
+
+        context.setLastResponse(response);
+    }
+
+    @When("trainee is deleted through core service")
+    public void traineeIsDeletedThroughCoreService() {
+        Response response = coreClient.delete("/trainees/" + context.getString("traineeUsername"), context.getToken());
 
         context.setLastResponse(response);
     }
@@ -149,7 +206,7 @@ public class CoreSteps {
     }
 
     private String uniqueFirstName(String name) {
-        return name.toLowerCase(Locale.ROOT);
+        return (name + (System.nanoTime() % 100000)).toLowerCase(Locale.ROOT);
     }
 
     private String uniqueLastName(String prefix) {

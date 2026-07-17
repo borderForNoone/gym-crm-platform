@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gym.crm.bdd.client.ApiClient;
 import com.gym.crm.bdd.client.JmsQueueClient;
 import com.gym.crm.bdd.config.TestProperties;
-import com.gym.crm.bdd.support.Payloads;
 import com.gym.crm.bdd.support.TestContext;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import io.restassured.response.Response;
 import lombok.RequiredArgsConstructor;
 import org.awaitility.Awaitility;
 
@@ -36,14 +36,21 @@ public class WorkloadSteps {
     public void trainerWorkloadMessageIsSent() {
         LocalDate trainingDate = LocalDate.now();
         String trainerUsername = context.getString("trainerUsername");
-        String traineeUsername = context.getString("traineeUsername");
-        context.put(TRAINER_USERNAME, trainerUsername);
+
+        context.put("trainerUsername", trainerUsername);
         context.put(TRAINING_YEAR, trainingDate.getYear());
         context.put(TRAINING_MONTH, trainingDate.getMonthValue());
 
-        context.setLastResponse(coreClient.post("/trainings", context.getToken(), Payloads.training(traineeUsername, trainerUsername, 45)));
+        Map<String, Object> message = Map.of("trainerUsername", trainerUsername, "trainingDate", trainingDate.toString(), "trainingDuration", 45,
+                "actionType", "ADD");
 
-        assertThat(context.getLastResponse().statusCode()).isEqualTo(200);
+        try {
+            String json = OBJECT_MAPPER.writeValueAsString(message);
+
+            jmsClient.sendText(WORKLOAD_QUEUE, json, Map.of("_type", "TrainerWorkloadRequest"));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @When("invalid trainer workload message is sent")
@@ -94,7 +101,7 @@ public class WorkloadSteps {
                     var response = workloadClient.get(path, context.getToken(), params);
 
                     assertThat(response.statusCode()).isEqualTo(200);
-                    assertThat(response.asString()).contains("45");
+                    assertThat(response.jsonPath().getInt("duration")).isEqualTo(180);
                 });
     }
 
@@ -105,13 +112,35 @@ public class WorkloadSteps {
 
     @Then("workload message is moved to DLQ")
     public void workloadMessageIsMovedToDlq() {
+        String trainerUsername = context.getString("trainerUsername");
+        LocalDate now = LocalDate.now();
+
         Awaitility.await()
                 .atMost(Duration.ofSeconds(5))
                 .pollInterval(Duration.ofMillis(500))
                 .untilAsserted(() -> {
-                    var response = workloadClient.get("/trainer-workloads/system.trainer", context.getToken(), Map.of("year", LocalDate.now().getYear(),
-                            "month", LocalDate.now().getMonthValue()));
-                    assertThat(response.statusCode()).isIn(400, 404);
+                    var response = workloadClient.get("/trainer-workloads/" + trainerUsername, context.getToken(), Map.of("year", now.getYear(),
+                            "month", now.getMonthValue()));
+
+                    assertThat(response.statusCode()).isEqualTo(404);
+                });
+    }
+
+    @Then("workload service eventually contains trainer duration {int}")
+    public void workloadServiceEventuallyContainsTrainerDuration(int duration) {
+        String trainerUsername = context.getString("trainerUsername");
+        LocalDate now = LocalDate.now();
+
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(10))
+                .pollInterval(Duration.ofMillis(500))
+                .untilAsserted(() -> {
+                    Response response = workloadClient.get("/trainer-workloads/" + trainerUsername, context.getToken(), Map.of("year", now.getYear(),
+                            "month", now.getMonthValue()));
+
+                    assertThat(response.statusCode()).isEqualTo(200);
+                    Integer actualDuration = response.jsonPath().getInt("years[0].months[0].trainingSummaryDuration");
+                    assertThat(actualDuration).isEqualTo(duration);
                 });
     }
 }

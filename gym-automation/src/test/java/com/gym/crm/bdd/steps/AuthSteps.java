@@ -4,7 +4,9 @@ import com.gym.crm.bdd.client.ApiClient;
 import com.gym.crm.bdd.config.TestProperties;
 import com.gym.crm.bdd.support.Payloads;
 import com.gym.crm.bdd.support.TestContext;
+import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
+import io.restassured.response.Response;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -20,5 +22,14 @@ public class AuthSteps {
     @When("user logs in with invalid password")
     public void userLogsInWithInvalidPassword() {
         context.setLastResponse(coreClient.post("/auth/login", null, Payloads.login(context.getString("traineeUsername"), "wrong-password")));
+    }
+
+    @Given("registered trainee is authenticated")
+    public void registeredTraineeIsAuthenticated() {
+        Response response = coreClient.post("/auth/login", null, Payloads.login(context.getString("traineeUsername"),
+                context.getString("traineePassword")));
+
+        context.setLastResponse(response);
+        context.setToken(response.jsonPath().getString("token"));
     }
 }
