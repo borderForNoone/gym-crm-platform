@@ -84,8 +84,7 @@ public final class Payloads {
     }
 
     public static Map<String, Object> invalidTraining() {
-        return Map.of(
-                "trainerFirstName", "System",
+        return Map.of("trainerFirstName", "System",
                 "trainerLastName", "Trainer",
                 "isActive", true,
                 "trainingDate", LocalDate.now().plusDays(1).toString(),

@@ -26,6 +26,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -69,17 +70,14 @@ class TrainingControllerTest {
         TrainingCreateRequest request = buildValidRequest();
         request.setTraineeUsername(null);
 
-        doThrow(new ValidationFailedException("traineeId must not be null, trainerId must not be null, trainingTypeName must not be blank"))
-                .when(facade).createTraining(any(TrainingCreateRequest.class));
-
-        ResultActions result = mockMvc.perform(post(BASE_URL + "/trainings")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)));
-        result.andExpect(status().isBadRequest())
+        mockMvc.perform(post(BASE_URL + "/trainings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value(ApiError.VALIDATION_ERROR.getCode()))
                 .andExpect(jsonPath("$.errorMessage").value("Validation error"));
 
-        verify(facade).createTraining(any(TrainingCreateRequest.class));
+        verifyNoInteractions(facade);
     }
 
     @Test
@@ -87,17 +85,15 @@ class TrainingControllerTest {
         TrainingCreateRequest request = buildValidRequest();
         request.setTrainingDuration(-1);
 
-        doThrow(new ValidationFailedException("trainingDuration must be greater than or equal to 1")).when(facade).createTraining(any(TrainingCreateRequest.class));
-
-        ResultActions result = mockMvc.perform(post(BASE_URL + "/trainings")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)));
-
-        result.andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorCode").value(ApiError.VALIDATION_ERROR.getCode()))
+        mockMvc.perform(post(BASE_URL + "/trainings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value(ApiError.VALIDATION_ERROR.getCode()))
                 .andExpect(jsonPath("$.errorMessage").value("Validation error"));
-        verify(facade).createTraining(any(TrainingCreateRequest.class));
-    }
 
+        verifyNoInteractions(facade);
+    }
     @Test
     void getTrainingTypes_shouldReturnOkWithTypes() throws Exception {
         List<TrainingTypeResponse> types = List.of(new TrainingTypeResponse(), new TrainingTypeResponse());
