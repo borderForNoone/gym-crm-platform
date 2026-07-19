@@ -29,11 +29,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static java.util.Calendar.JULY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
@@ -124,7 +126,7 @@ class TraineeServiceImplTest {
         String username = "trainee.user";
         User trainerUser = User.builder().username("trainer.user").firstName("John").lastName("Doe").isActive(true).build();
         Trainer trainer = Trainer.builder().user(trainerUser).build();
-        Training training = Training.builder().trainer(trainer).trainingDuration(60).trainingDate(java.time.LocalDate.of(2026, 7, 17)).build();
+        Training training = Training.builder().trainer(trainer).trainingDuration(60).trainingDate(LocalDate.of(2026, JULY, 17)).build();
         Trainee trainee = Trainee.builder().user(User.builder().username(username).build()).build();
 
         TraineeInfoDTO dto = mock(TraineeInfoDTO.class);

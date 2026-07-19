@@ -13,12 +13,6 @@ public class MongoCleanupHook {
 
     @Before("@integration")
     public void cleanMongo() {
-        long before = mongoTemplate.getCollection("trainer_workloads").countDocuments();
-
         mongoTemplate.getCollection("trainer_workloads").deleteMany(new org.bson.Document());
-
-        long after = mongoTemplate
-                .getCollection("trainer_workloads")
-                .countDocuments();
     }
 }

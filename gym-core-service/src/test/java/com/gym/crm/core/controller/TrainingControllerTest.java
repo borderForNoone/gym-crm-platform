@@ -3,7 +3,6 @@ package com.gym.crm.core.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gym.crm.core.exception.ApiError;
 import com.gym.crm.core.exception.ApiExceptionHandler;
-import com.gym.crm.core.exception.ValidationFailedException;
 import com.gym.crm.core.facade.GymFacade;
 import com.gym.crm.core.security.CustomUserDetailsService;
 import com.gym.crm.core.security.JwtService;
@@ -18,13 +17,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -94,6 +91,7 @@ class TrainingControllerTest {
 
         verifyNoInteractions(facade);
     }
+
     @Test
     void getTrainingTypes_shouldReturnOkWithTypes() throws Exception {
         List<TrainingTypeResponse> types = List.of(new TrainingTypeResponse(), new TrainingTypeResponse());
