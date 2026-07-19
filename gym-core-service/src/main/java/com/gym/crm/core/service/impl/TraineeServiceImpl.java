@@ -126,26 +126,11 @@ public class TraineeServiceImpl implements TraineeService {
 
         Trainee trainee = traineeRepository.findByUser_Username(username)
                 .orElseThrow(() -> new EntityNotFoundException("Trainee not found"));
-        List<Training> trainings = trainingRepository.findTraineeTrainings(
-                username,
-                null,
-                null
-        );
 
-        for (Training training : trainings) {
-            Trainer trainer = training.getTrainer();
-
-            workloadEventPublisher.publish(
-                    new TrainerWorkloadRequest()
-                            .trainerUsername(trainer.getUser().getUsername())
-                            .trainerFirstName(trainer.getUser().getFirstName())
-                            .trainerLastName(trainer.getUser().getLastName())
-                            .isActive(trainer.getUser().getIsActive())
-                            .trainingDate(training.getTrainingDate())
-                            .trainingDuration(training.getTrainingDuration())
-                            .actionType(ActionType.DELETE)
-            );
-        }
+        trainingRepository.findTraineeTrainings(username, null, null)
+                .stream()
+                .map(this::toDeleteWorkloadRequest)
+                .forEach(workloadEventPublisher::publish);
 
         TraineeInfoDTO dto = mapper.toInfoDto(trainee);
 
@@ -206,5 +191,18 @@ public class TraineeServiceImpl implements TraineeService {
         Trainee result = trainee.toBuilder().user(currentUser).dateOfBirth(updatedData.getDateOfBirth()).address(updatedData.getAddress()).build();
 
         return traineeRepository.save(result);
+    }
+
+    private TrainerWorkloadRequest toDeleteWorkloadRequest(Training training) {
+        Trainer trainer = training.getTrainer();
+
+        return new TrainerWorkloadRequest()
+                .trainerUsername(trainer.getUser().getUsername())
+                .trainerFirstName(trainer.getUser().getFirstName())
+                .trainerLastName(trainer.getUser().getLastName())
+                .isActive(trainer.getUser().getIsActive())
+                .trainingDate(training.getTrainingDate())
+                .trainingDuration(training.getTrainingDuration())
+                .actionType(ActionType.DELETE);
     }
 }
