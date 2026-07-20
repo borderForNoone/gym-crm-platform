@@ -159,8 +159,8 @@ public class WorkloadSteps {
     private String buildInvalidWorkloadMessage(LocalDate trainingDate) {
         Map<String, Object> message = new LinkedHashMap<>();
         message.put("trainerUsername", "");
-        message.put("trainerFirstName", "John");
-        message.put("trainerLastName", "Doe");
+        message.put("trainerFirstName", "Tom");
+        message.put("trainerLastName", "Tomas");
         message.put("isActive", true);
         message.put("trainingDate", trainingDate.toString());
         message.put("trainingDuration", TRAINING_DURATION);

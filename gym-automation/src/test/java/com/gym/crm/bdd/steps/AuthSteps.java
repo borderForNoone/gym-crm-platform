@@ -18,7 +18,8 @@ public class AuthSteps {
 
     @When("user logs in with valid credentials")
     public void userLogsInWithValidCredentials() {
-        context.setLastResponse(coreClient.post("/auth/login", null, Payloads.login(context.getString("traineeUsername"), context.getString("traineePassword"))));
+        context.setLastResponse(coreClient.post("/auth/login", null, Payloads.login(context.getString("traineeUsername"),
+                context.getString("traineePassword"))));
     }
 
     @Given("registered trainer is authenticated")
@@ -35,7 +36,6 @@ public class AuthSteps {
         assertThat(response.statusCode()).as("Trainer login response: %s", response.asString()).isEqualTo(200);
         String token = response.jsonPath().getString("token");
         assertThat(token).isNotBlank();
-
         context.setToken(token);
     }
 
@@ -46,7 +46,8 @@ public class AuthSteps {
 
     @Given("registered trainee is authenticated")
     public void registeredTraineeIsAuthenticated() {
-        Response response = coreClient.post("/auth/login", null, Payloads.login(context.getString("traineeUsername"), context.getString("traineePassword")));
+        Response response = coreClient.post("/auth/login", null, Payloads.login(context.getString("traineeUsername"),
+                context.getString("traineePassword")));
 
         context.setLastResponse(response);
         context.setToken(response.jsonPath().getString("token"));
