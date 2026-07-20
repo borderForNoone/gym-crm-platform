@@ -54,7 +54,11 @@ public class TestProperties {
                 throw new IllegalStateException(PROPERTIES_FILE + " not found on the test classpath");
             }
 
-            Map<String, Object> raw = yaml.load(inputStream);
+            Object loaded = yaml.load(inputStream);
+            if (!(loaded instanceof Map<?, ?> raw)) {
+                throw new IllegalStateException("Top-level YAML must be a map, got: " + loaded);
+            }
+
             Map<String, String> flat = new HashMap<>();
             flatten("", raw, flat);
 
@@ -64,14 +68,13 @@ public class TestProperties {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void flatten(String prefix, Map<String, Object> node, Map<String, String> out) {
-        for (Map.Entry<String, Object> entry : node.entrySet()) {
-            String key = prefix.isEmpty() ? entry.getKey() : prefix + "." + entry.getKey();
+    private void flatten(String prefix, Map<?, ?> node, Map<String, String> out) {
+        for (Map.Entry<?, ?> entry : node.entrySet()) {
+            String key = prefix.isEmpty() ? entry.getKey().toString() : prefix + "." + entry.getKey().toString();
             Object value = entry.getValue();
 
-            if (value instanceof Map) {
-                flatten(key, (Map<String, Object>) value, out);
+            if (value instanceof Map<?, ?> nested) {
+                flatten(key, nested, out);
             } else {
                 out.put(key, String.valueOf(value));
             }

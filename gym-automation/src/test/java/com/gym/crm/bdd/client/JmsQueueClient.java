@@ -21,18 +21,21 @@ public class JmsQueueClient {
             Queue queue = context.createQueue(queueName);
             TextMessage message = context.createTextMessage(body);
 
-            stringProperties.forEach((key, value) -> {
-                try {
-                    message.setStringProperty(key, value);
-                } catch (JMSException e) {
-                    throw new JMSRuntimeException(e.getMessage(), e.getErrorCode(), e);
-                }
-            });
-
+            setProperties(message, stringProperties);
             context.createProducer().send(queue, message);
         } catch (JMSRuntimeException e) {
             throw new IllegalStateException("Failed to send JMS message to " + queueName, e);
         }
+    }
+
+    private void setProperties(TextMessage message, Map<String, String> properties) {
+        properties.forEach((key, value) -> {
+            try {
+                message.setStringProperty(key, value);
+            } catch (JMSException e) {
+                throw new JMSRuntimeException(e.getMessage(), e.getErrorCode(), e);
+            }
+        });
     }
 
     private ActiveMQConnectionFactory connectionFactory() {

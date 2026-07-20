@@ -20,7 +20,7 @@ public class JmsConfig {
     }
 
     @Bean
-    public JmsTemplate jmsTemplate(ConnectionFactory cf) {
-        return new JmsTemplate(cf);
+    public JmsTemplate jmsTemplate(ConnectionFactory connectionFactory) {
+        return new JmsTemplate(connectionFactory);
     }
 }
