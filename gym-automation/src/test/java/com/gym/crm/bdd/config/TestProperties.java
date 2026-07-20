@@ -49,12 +49,12 @@ public class TestProperties {
     private Map<String, String> load() {
         Yaml yaml = new Yaml();
 
-        try (InputStream in = TestProperties.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE)) {
-            if (in == null) {
+        try (InputStream inputStream = TestProperties.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE)) {
+            if (inputStream == null) {
                 throw new IllegalStateException(PROPERTIES_FILE + " not found on the test classpath");
             }
 
-            Map<String, Object> raw = yaml.load(in);
+            Map<String, Object> raw = yaml.load(inputStream);
             Map<String, String> flat = new HashMap<>();
             flatten("", raw, flat);
 

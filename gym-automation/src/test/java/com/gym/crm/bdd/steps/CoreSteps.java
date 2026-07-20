@@ -63,17 +63,12 @@ public class CoreSteps {
         String username = context.getString("authUsername");
         String password = context.getString("authPassword");
 
-        if (username == null || password == null) {
-            if (context.getString("trainerUsername") != null) {
-                username = context.getString("trainerUsername");
-                password = context.getString("trainerPassword");
-            } else {
-                username = context.getString("traineeUsername");
-                password = context.getString("traineePassword");
-            }
-        }
+        if (username != null && password != null) {
+            login(username, password);
 
-        login(username, password);
+            return;
+        }
+        loginGymUser();
     }
 
     @Given("trainer is authenticated")
@@ -214,5 +209,14 @@ public class CoreSteps {
         String token = response.jsonPath().getString("token");
         assertThat(token).as("JWT token should exist").isNotBlank();
         context.setToken(token);
+    }
+
+    private void loginGymUser() {
+        if (context.getString("trainerUsername") != null) {
+            login(context.getString("trainerUsername"), context.getString("trainerPassword"));
+
+            return;
+        }
+        login(context.getString("traineeUsername"), context.getString("traineePassword"));
     }
 }
