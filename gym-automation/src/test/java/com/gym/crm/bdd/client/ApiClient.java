@@ -29,16 +29,6 @@ public class ApiClient {
                 .delete(baseUrl + path);
     }
 
-    public String getBaseUrl() {
-        return baseUrl;
-    }
-
-    public Response put(String path, String token, Object body) {
-        return request(token)
-                .body(body)
-                .put(baseUrl + path);
-    }
-
     private RequestSpecification request(String token) {
         RequestSpecification request = RestAssured.given()
                 .relaxedHTTPSValidation()

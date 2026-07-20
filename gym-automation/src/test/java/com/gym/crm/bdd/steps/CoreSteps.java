@@ -53,12 +53,10 @@ public class CoreSteps {
         Response response = coreClient.post("/trainees/register", null, Payloads.trainee(uniqueFirstName("Auth"), uniqueLastName("User")));
 
         assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
-
         JsonPath json = response.jsonPath();
         context.put("authUsername", json.getString(USERNAME));
         context.put("authPassword", json.getString(PASSWORD));
     }
-
 
     @Given("gym user is authenticated")
     public void theGymUserIsAuthenticated() {
@@ -78,7 +76,6 @@ public class CoreSteps {
         login(username, password);
     }
 
-
     @Given("trainer is authenticated")
     public void trainerIsAuthenticated() {
         String username = context.getString("trainerUsername");
@@ -89,20 +86,6 @@ public class CoreSteps {
 
         login(username, password);
     }
-
-    private void login(String username, String password) {
-        assertThat(username).as("Username should exist").isNotBlank();
-        assertThat(password).as("Password should exist").isNotBlank();
-
-        Response response = coreClient.post("/auth/login", null, Payloads.login(username, password));
-        context.setLastResponse(response);
-
-        assertThat(response.statusCode()).as("Login should return 200. Response: %s", response.asString()).isEqualTo(HttpStatus.OK.value());
-        String token = response.jsonPath().getString("token");
-        assertThat(token).as("JWT token should exist").isNotBlank();
-        context.setToken(token);
-    }
-
 
     @Given("trainer and trainee are registered")
     public void trainerAndTraineeAreRegistered() {
@@ -116,12 +99,9 @@ public class CoreSteps {
         String traineeUsername = context.getString("traineeUsername");
 
         assertThat(context.getToken()).as("JWT token should exist").isNotBlank();
-
         Response response = coreClient.post("/trainings", context.getToken(), Payloads.training(traineeUsername, trainerUsername, 45));
-
         context.setLastResponse(response);
     }
-
 
     @When("trainee is registered through core service with details")
     public void traineeIsRegisteredThroughCoreServiceWithDetails(Map<String, String> details) {
@@ -140,7 +120,6 @@ public class CoreSteps {
 
         Response response = coreClient.post("/trainers/register", null, Map.of("firstName", unique.get("firstName"),
                 "lastName", unique.get("lastName"), "specialization", unique.get("specialization")));
-
         context.setLastResponse(response);
 
         JsonPath json = response.jsonPath();
@@ -157,11 +136,9 @@ public class CoreSteps {
         }
 
         assertThat(context.getToken()).as("JWT token should exist").isNotBlank();
-
         Response response = coreClient.post("/trainings", context.getToken(), Map.of("traineeUsername", context.getString("traineeUsername"),
                 "trainerUsername", context.getString("trainerUsername"), "trainingName", details.get("trainingName"),
                 "trainingDate", trainingDate, "trainingDuration", Integer.parseInt(details.get("trainingDuration"))));
-
         context.setLastResponse(response);
     }
 
@@ -184,7 +161,6 @@ public class CoreSteps {
         Response response = coreClient.post("/trainees/register", null, Payloads.trainee(uniqueFirstName("Trainee"), uniqueLastName("User")));
 
         context.setLastResponse(response);
-
         storeCredentials("trainee", response);
     }
 
@@ -192,7 +168,6 @@ public class CoreSteps {
         Response response = coreClient.post("/trainees/register", null, Payloads.trainee(uniqueFirstName("Trainee"), uniqueLastName("User")));
 
         assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
-
         storeCredentials("trainee", response);
     }
 
@@ -200,9 +175,7 @@ public class CoreSteps {
         Response response = coreClient.post("/trainers/register", null, Payloads.trainer(uniqueFirstName("Trainer"), uniqueLastName("User"),
                 "Cardio"));
 
-
         assertThat(response.statusCode()).isEqualTo(HttpStatus.OK.value());
-
         storeCredentials("trainer", response);
     }
 
@@ -228,5 +201,18 @@ public class CoreSteps {
 
     private String uniqueLastName(String prefix) {
         return (prefix + (System.nanoTime() % 100000)).toLowerCase(Locale.ROOT);
+    }
+
+    private void login(String username, String password) {
+        assertThat(username).as("Username should exist").isNotBlank();
+        assertThat(password).as("Password should exist").isNotBlank();
+
+        Response response = coreClient.post("/auth/login", null, Payloads.login(username, password));
+        context.setLastResponse(response);
+
+        assertThat(response.statusCode()).as("Login should return 200. Response: %s", response.asString()).isEqualTo(HttpStatus.OK.value());
+        String token = response.jsonPath().getString("token");
+        assertThat(token).as("JWT token should exist").isNotBlank();
+        context.setToken(token);
     }
 }

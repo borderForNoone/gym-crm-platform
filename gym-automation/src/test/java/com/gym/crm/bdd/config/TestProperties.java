@@ -40,14 +40,15 @@ public class TestProperties {
 
         String fromFile = DEFAULTS.get(name);
         if (fromFile == null) {
-            throw new IllegalStateException("Missing property '" + name + "': set it in " + PROPERTIES_FILE
-                            + " or pass -D" + name + "=... on the command line");
+            throw new IllegalStateException("Missing property '" + name + "': set it in " + PROPERTIES_FILE + " or pass -D" + name + "=... on the command line");
         }
+
         return fromFile;
     }
 
     private Map<String, String> load() {
         Yaml yaml = new Yaml();
+
         try (InputStream in = TestProperties.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE)) {
             if (in == null) {
                 throw new IllegalStateException(PROPERTIES_FILE + " not found on the test classpath");

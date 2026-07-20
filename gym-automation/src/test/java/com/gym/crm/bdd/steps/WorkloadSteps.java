@@ -146,12 +146,10 @@ public class WorkloadSteps {
                             Map.of("year", now.getYear(), "month", now.getMonthValue()));
 
                     assertThat(response.statusCode()).isEqualTo(200);
-
                     int actualDuration = Integer.parseInt(response.asString().trim());
                     assertThat(actualDuration).isEqualTo(duration);
                 });
     }
-
 
     @Then("workload service eventually does not contain trainer workload")
     public void workloadServiceEventuallyDoesNotContainTrainerWorkload() {
