@@ -51,14 +51,12 @@ public class TrainerWorkloadMessageListener {
     }
 
     private void logReceivedMessage(TrainerWorkloadRequest request, String transactionId) {
-        log.info(
-                "Received workload event trainer={} action={} duration={} date={} txId={}",
+        log.info("Received workload event trainer={} action={} duration={} date={} txId={}",
                 request != null ? request.getTrainerUsername() : null,
                 request != null ? request.getActionType() : null,
                 request != null ? request.getTrainingDuration() : null,
                 request != null ? request.getTrainingDate() : null,
-                transactionId
-        );
+                transactionId);
     }
 
     private void process(TrainerWorkloadRequest request) {

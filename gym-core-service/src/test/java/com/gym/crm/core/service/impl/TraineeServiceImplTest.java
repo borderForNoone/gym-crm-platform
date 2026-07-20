@@ -128,7 +128,6 @@ class TraineeServiceImplTest {
         Trainer trainer = Trainer.builder().user(trainerUser).build();
         Training training = Training.builder().trainer(trainer).trainingDuration(60).trainingDate(LocalDate.of(2026, JULY, 17)).build();
         Trainee trainee = Trainee.builder().user(User.builder().username(username).build()).build();
-
         TraineeInfoDTO dto = mock(TraineeInfoDTO.class);
 
         when(traineeRepository.findByUser_Username(username)).thenReturn(Optional.of(trainee));
