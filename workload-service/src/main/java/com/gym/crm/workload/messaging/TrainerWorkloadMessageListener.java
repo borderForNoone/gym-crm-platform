@@ -37,8 +37,7 @@ public class TrainerWorkloadMessageListener {
         MDC.put(MDC_TRANSACTION_ID_KEY, transactionId);
 
         try {
-            log.info("Received workload event trainer={} action={} txId={}", request != null ? request.getTrainerUsername() : null,
-                    request != null ? request.getActionType() : null, transactionId);
+            logReceivedMessage(request, transactionId);
             validate(request);
             process(request);
         } catch (InvalidWorkloadMessageException | WorkloadMessageProcessingException e) {
@@ -49,6 +48,15 @@ public class TrainerWorkloadMessageListener {
         } finally {
             MDC.remove(MDC_TRANSACTION_ID_KEY);
         }
+    }
+
+    private void logReceivedMessage(TrainerWorkloadRequest request, String transactionId) {
+        log.info("Received workload event trainer={} action={} duration={} date={} txId={}",
+                request != null ? request.getTrainerUsername() : null,
+                request != null ? request.getActionType() : null,
+                request != null ? request.getTrainingDuration() : null,
+                request != null ? request.getTrainingDate() : null,
+                transactionId);
     }
 
     private void process(TrainerWorkloadRequest request) {

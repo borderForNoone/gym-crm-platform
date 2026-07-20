@@ -21,6 +21,7 @@ public class ResponseSteps {
         assertThat(context.getLastResponse().jsonPath().getString("password")).isNotBlank();
     }
 
+    @Then("response contains error body")
     @Then("response contains an error body")
     public void responseContainsAnErrorBody() {
         assertThat(context.getLastResponse().jsonPath().getString("errorMessage")).isNotBlank();

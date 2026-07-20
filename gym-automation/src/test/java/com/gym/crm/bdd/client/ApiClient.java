@@ -24,14 +24,9 @@ public class ApiClient {
                 .post(baseUrl + path);
     }
 
-    public String getBaseUrl() {
-        return baseUrl;
-    }
-
-    public Response put(String path, String token, Object body) {
+    public Response delete(String path, String token) {
         return request(token)
-                .body(body)
-                .put(baseUrl + path);
+                .delete(baseUrl + path);
     }
 
     private RequestSpecification request(String token) {

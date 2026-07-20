@@ -40,20 +40,25 @@ public class TestProperties {
 
         String fromFile = DEFAULTS.get(name);
         if (fromFile == null) {
-            throw new IllegalStateException("Missing property '" + name + "': set it in " + PROPERTIES_FILE
-                            + " or pass -D" + name + "=... on the command line");
+            throw new IllegalStateException("Missing property '" + name + "': set it in " + PROPERTIES_FILE + " or pass -D" + name + "=... on the command line");
         }
+
         return fromFile;
     }
 
     private Map<String, String> load() {
         Yaml yaml = new Yaml();
-        try (InputStream in = TestProperties.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE)) {
-            if (in == null) {
+
+        try (InputStream inputStream = TestProperties.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE)) {
+            if (inputStream == null) {
                 throw new IllegalStateException(PROPERTIES_FILE + " not found on the test classpath");
             }
 
-            Map<String, Object> raw = yaml.load(in);
+            Object loaded = yaml.load(inputStream);
+            if (!(loaded instanceof Map<?, ?> raw)) {
+                throw new IllegalStateException("Top-level YAML must be a map, got: " + loaded);
+            }
+
             Map<String, String> flat = new HashMap<>();
             flatten("", raw, flat);
 
@@ -63,14 +68,13 @@ public class TestProperties {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void flatten(String prefix, Map<String, Object> node, Map<String, String> out) {
-        for (Map.Entry<String, Object> entry : node.entrySet()) {
-            String key = prefix.isEmpty() ? entry.getKey() : prefix + "." + entry.getKey();
+    private void flatten(String prefix, Map<?, ?> node, Map<String, String> out) {
+        for (Map.Entry<?, ?> entry : node.entrySet()) {
+            String key = prefix.isEmpty() ? entry.getKey().toString() : prefix + "." + entry.getKey().toString();
             Object value = entry.getValue();
 
-            if (value instanceof Map) {
-                flatten(key, (Map<String, Object>) value, out);
+            if (value instanceof Map<?, ?> nested) {
+                flatten(key, nested, out);
             } else {
                 out.put(key, String.valueOf(value));
             }

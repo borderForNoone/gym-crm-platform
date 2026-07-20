@@ -105,7 +105,7 @@ components:
       schema:
         type: string
         pattern: ^[a-zA-Z]+\.[a-zA-Z]+(\d+)?$
-        example: john.doe
+        example: tom.tomas
     Year:
       name: year
       in: query
@@ -141,17 +141,17 @@ components:
           type: string
           description: Trainer username
           pattern: ^[a-zA-Z]+\.[a-zA-Z]+(\d+)?$
-          example: john.doe
+          example: tom.tomas
         trainerFirstName:
           type: string
           description: Trainer first name
           maxLength: 50
-          example: John
+          example: Tom
         trainerLastName:
           type: string
           description: Trainer last name
           maxLength: 50
-          example: Doe
+          example: Tomas
         isActive:
           type: boolean
           description: Trainer active status
@@ -186,7 +186,7 @@ components:
         trainerUsername:
           type: string
           description: Trainer username
-          example: john.doe
+          example: tom.tomas
         year:
           type: integer
           description: Training year

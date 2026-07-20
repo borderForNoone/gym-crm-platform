@@ -20,6 +20,7 @@ import com.gym.crm.core.search.filter.TraineeTrainingFilter;
 import com.gym.crm.core.service.UserProfileService;
 import com.gym.crm.core.service.common.CoreValidator;
 import com.gym.crm.core.service.common.UserInputValidator;
+import com.gym.crm.core.client.workload.WorkloadEventPublisher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,11 +29,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static java.util.Calendar.JULY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
@@ -64,6 +67,8 @@ class TraineeServiceImplTest {
     private UserInputValidator userInputValidator;
     @Mock
     private WorkloadRequestMapper requestMapper;
+    @Mock
+    private WorkloadEventPublisher workloadEventPublisher;
     @Mock
     private ApplicationEventPublisher publisher;
     @InjectMocks
@@ -114,6 +119,27 @@ class TraineeServiceImplTest {
         assertThat(result).isNotNull();
         verify(userInputValidator).validate(dto, "Trainee");
         verify(traineeRepository).save(any());
+    }
+
+    @Test
+    void deleteByUsername_shouldPublishDeleteWorkloadEventsAndDeleteTrainee() {
+        String username = "trainee.user";
+        User trainerUser = User.builder().username("trainer.user").firstName("John").lastName("Doe").isActive(true).build();
+        Trainer trainer = Trainer.builder().user(trainerUser).build();
+        Training training = Training.builder().trainer(trainer).trainingDuration(60).trainingDate(LocalDate.of(2026, JULY, 17)).build();
+        Trainee trainee = Trainee.builder().user(User.builder().username(username).build()).build();
+        TraineeInfoDTO dto = mock(TraineeInfoDTO.class);
+
+        when(traineeRepository.findByUser_Username(username)).thenReturn(Optional.of(trainee));
+        when(trainingRepository.findTraineeTrainings(username, null, null)).thenReturn(List.of(training));
+        when(mapper.toInfoDto(trainee)).thenReturn(dto);
+
+        TraineeInfoDTO result = service.deleteByUsername(username);
+
+        assertThat(result).isNotNull();
+        verify(trainingRepository).findTraineeTrainings(username, null, null);
+        verify(workloadEventPublisher).publish(any());
+        verify(traineeRepository).delete(trainee);
     }
 
     @Test

@@ -10,9 +10,9 @@ at them.
 
 ## Prerequisites
 
-- `gym-core-service` running and reachable (default: `http://localhost:8080`)
-- `workload-service` running and reachable (default: `http://localhost:8082/workload-service`)
-- Their usual dependencies (MySQL, MongoDB, Redis, ActiveMQ) up, exactly as when you run these
+* `gym-core-service` running and reachable (default: `http://localhost:8080`)
+* `workload-service` running and reachable (default: `http://localhost:8082/workload-service`)
+* Their usual dependencies (MySQL, MongoDB, Redis, ActiveMQ) up, exactly as when you run these
   services for local development — see the root `README.md`.
 
 Start both services the same way you always do (IDE Run configuration, or
@@ -25,7 +25,7 @@ These tests are **off by default** (`skipBddTests=true` in `pom.xml`) so they ne
 normal `mvn test` / `mvn verify` build—they only run when explicitly requested, since they
 require a live environment.
 
-### From the console (Maven)
+### Run the entire test suite
 
 ```bash
 mvn test -pl gym-automation -DskipBddTests=false
@@ -38,16 +38,67 @@ Suite that discovers and runs every `.feature` file under `src/test/resources/fe
 Running it directly from the IDE bypasses the Surefire `skipBddTests` gate, so no extra flag is
 needed.
 
-### Running a subset
+### Run tests for a single microservice
 
-Every scenario is tagged. Filter by tag with the standard Cucumber JUnit Platform property:
+Run only **gym-core-service** component tests:
 
 ```bash
-mvn test -pl gym-automation -DskipBddTests=false -Dcucumber.filter.tags="@core"
+mvn test -pl gym-automation \
+  -DskipBddTests=false \
+  -Dcucumber.filter.tags="@core"
 ```
 
-Available tags: `@component`, `@core`, plus one per scenario (e.g. `@trainee-register`,
-`@auth-login`, `@training-types`).
+Run only **workload-service** component tests:
+
+```bash
+mvn test -pl gym-automation \
+  -DskipBddTests=false \
+  -Dcucumber.filter.tags="@workload"
+```
+
+### Run tests for a specific endpoint or feature
+
+Run only training creation scenarios:
+
+```bash
+mvn test -pl gym-automation \
+  -DskipBddTests=false \
+  -Dcucumber.filter.tags="@training-create"
+```
+
+Run only workload validation scenarios:
+
+```bash
+mvn test -pl gym-automation \
+  -DskipBddTests=false \
+  -Dcucumber.filter.tags="@workload-validation"
+```
+
+You can also combine tags using standard Cucumber expressions, for example:
+
+```bash
+mvn test -pl gym-automation \
+  -DskipBddTests=false \
+  -Dcucumber.filter.tags="@core and not @negative"
+```
+
+Available tags include:
+
+* `@component`
+* `@core`
+* `@workload`
+* `@integration`
+* `@training-create`
+* `@training-types`
+* `@auth-login`
+* `@trainee-register`
+* `@workload-update`
+* `@workload-get`
+* `@workload-validation`
+* `@workload-security`
+* `@workload-delete`
+* `@negative`
+* `@edge-case`
 
 ## Configuration
 
@@ -76,26 +127,26 @@ System properties take precedence over values from `application.yml`.
 
 ## Module layout
 
-| Package | Responsibility |
-|---------|----------------|
-| `config` | `TestProperties` — resolves service URLs from `application.yml` and system property overrides |
-| `client` | Thin HTTP wrapper (`ApiClient`) — the only place that knows about RestAssured |
-| `support` | Scenario-shared state (`TestContext`) and request-body builders (`Payloads`) |
-| `steps` | Cucumber step definitions, constructor-injected with `TestContext` via `cucumber-picocontainer` |
-| `resources/features` | Gherkin scenarios (the tests themselves) |
-| `resources/application.yml` | Default service URLs |
+| Package                     | Responsibility                                                                                  |
+| --------------------------- | ----------------------------------------------------------------------------------------------- |
+| `config`                    | `TestProperties` — resolves service URLs from `application.yml` and system property overrides   |
+| `client`                    | Thin HTTP wrapper (`ApiClient`) — the only place that knows about RestAssured                   |
+| `support`                   | Scenario-shared state (`TestContext`) and request-body builders (`Payloads`)                    |
+| `steps`                     | Cucumber step definitions, constructor-injected with `TestContext` via `cucumber-picocontainer` |
+| `resources/features`        | Gherkin scenarios (the tests themselves)                                                        |
+| `resources/application.yml` | Default service URLs                                                                            |
 
 Step classes only ever call `ApiClient`, never RestAssured directly, and never hardcode a base
 URL—always go through `TestProperties`.
 
 ## Troubleshooting
 
-- **`Connection refused`** — the target service isn't running, or is running on a different
+* **`Connection refused`** — the target service isn't running, or is running on a different
   port/context-path than the defaults in `application.yml`. Confirm it's up, or override
   the base URL as shown above.
-- **`IllegalStateException: application.yml not found on the test classpath`** — the file
+* **`IllegalStateException: application.yml not found on the test classpath`** — the file
   isn't where `TestProperties` expects it (`src/test/resources/application.yml`), or a
   clean/rebuild is needed so it gets copied into `target/test-classes`.
-- **`UndefinedStepException` / all steps undefined at once** — almost always a mismatch between
+* **`UndefinedStepException` / all steps undefined at once** — almost always a mismatch between
   the `GLUE_PROPERTY_NAME` value in `CucumberRunner.java` and the actual `package` declared in the
   step classes under `steps`. Both must be exactly `com.gym.crm.bdd.steps`.
