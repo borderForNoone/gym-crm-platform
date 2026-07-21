@@ -1,6 +1,5 @@
-package com.gym.crm.core.security;
+package com.gym.crm.core.security.impl;
 
-import com.gym.crm.core.security.impl.RedisBruteForceProtectionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

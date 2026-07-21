@@ -81,6 +81,16 @@ class JwtServiceTest {
         assertThrows(Exception.class, executable);
     }
 
+    @Test
+    void shouldExtractExpiration() {
+        Date expiration = new Date(System.currentTimeMillis() + 60_000);
+        String jwtToken = Jwts.builder().subject("trainer").issuedAt(new Date()).expiration(expiration).signWith(signingKey).compact();
+
+        Date actualExpiration = jwtService.extractExpiration(jwtToken);
+
+        assertEquals(expiration.getTime() / 1000, actualExpiration.getTime() / 1000);
+    }
+
     private String createToken(String username) {
         return Jwts.builder()
                 .subject(username)
