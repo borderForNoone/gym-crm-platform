@@ -8,10 +8,11 @@ Feature: Gym core service component API
     And response contains generated credentials
 
   @auth-login
-  Scenario: Reject login with invalid password
-    Given trainee is registered through core service
-    When user logs in with invalid password
+  Scenario: Reject invalid login credentials
+    Given gym user is registered
+    When registered user logs in with wrong password
     Then response status is 401
+    And response contains error body
 
   @training-types
   Scenario: Reject forbidden training types request

@@ -1,5 +1,6 @@
 package com.gym.crm.workload.security;
 
+import com.gym.crm.workload.security.imp.RedisTokenBlacklistService;
 import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,7 +33,7 @@ class JwtAuthenticationFilterTest {
     @Mock
     private JwtService jwtService;
     @Mock
-    private TokenBlacklistService blacklistService;
+    private RedisTokenBlacklistService blacklistService;
     @Mock
     private MockFilterChain filterChain;
 

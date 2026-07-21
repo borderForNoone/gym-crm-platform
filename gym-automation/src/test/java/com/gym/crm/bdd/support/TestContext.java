@@ -7,15 +7,12 @@ import lombok.Setter;
 import java.util.HashMap;
 import java.util.Map;
 
+@Getter
+@Setter
 public class TestContext {
-    private final Map<String, Object> values = new HashMap<>();
-
-    @Setter
-    @Getter
     private Response lastResponse;
-    @Setter
-    @Getter
     private String token;
+    private final Map<String, Object> values = new HashMap<>();
 
     public void put(String key, Object value) {
         values.put(key, value);
@@ -23,6 +20,7 @@ public class TestContext {
 
     public String getString(String key) {
         Object value = values.get(key);
+
         return value == null ? null : value.toString();
     }
 }

@@ -1,83 +1,60 @@
 package com.gym.crm.bdd.config;
 
-import lombok.experimental.UtilityClass;
-import org.yaml.snakeyaml.Yaml;
+import com.gym.crm.bdd.support.AutomationTestStack;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class TestProperties {
+    private static final String STACK_ENABLED = "system.tests.stack.enabled";
+    private static final String CORE_BASE_URL = "system.tests.core.base-url";
+    private static final String WORKLOAD_BASE_URL = "system.tests.workload.base-url";
+    private static final String DEFAULT_USERNAME = "system.tests.default-username";
+    private static final String DEFAULT_PASSWORD = "system.tests.default-password";
+    private static final String LOCAL_CORE_BASE_URL = "http://localhost:8080/api/v1";
+    private static final String LOCAL_WORKLOAD_BASE_URL = "http://localhost:8082/workload-service/api/v1";
+    private static final String LOCAL_USERNAME = "billy.herrington";
+    private static final String LOCAL_PASSWORD = "password";
 
-@UtilityClass
-public class TestProperties {
-    private static final String PROPERTIES_FILE = "application.yml";
-    private static final Map<String, String> DEFAULTS = load();
-
-    public String coreBaseUrl() {
-        return property("system.tests.core.base-url");
-    }
-
-    public String workloadBaseUrl() {
-        return property("system.tests.workload.base-url");
-    }
-
-    public String jmsBrokerUrl() {
-        return property("system.tests.jms.broker-url");
-    }
-
-    public String jmsUser() {
-        return property("system.tests.jms.user");
-    }
-
-    public String jmsPassword() {
-        return property("system.tests.jms.password");
-    }
-
-    private String property(String name) {
-        String override = System.getProperty(name);
-        if (override != null && !override.isBlank()) {
-            return override;
+    public static String coreBaseUrl() {
+        if (isStackEnabled()) {
+            return AutomationTestStack.coreBaseUrl();
         }
 
-        String fromFile = DEFAULTS.get(name);
-        if (fromFile == null) {
-            throw new IllegalStateException("Missing property '" + name + "': set it in " + PROPERTIES_FILE + " or pass -D" + name + "=... on the command line");
-        }
-
-        return fromFile;
+        return property(CORE_BASE_URL, LOCAL_CORE_BASE_URL);
     }
 
-    private Map<String, String> load() {
-        Yaml yaml = new Yaml();
+    public static String workloadBaseUrl() {
+        String url;
 
-        try (InputStream inputStream = TestProperties.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE)) {
-            if (inputStream == null) {
-                throw new IllegalStateException(PROPERTIES_FILE + " not found on the test classpath");
-            }
-
-            Object loaded = yaml.load(inputStream);
-            if (!(loaded instanceof Map<?, ?> raw)) {
-                throw new IllegalStateException("Top-level YAML must be a map, got: " + loaded);
-            }
-
-            Map<String, String> flat = new HashMap<>();
-            flatten("", raw, flat);
-
-            return flat;
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to load " + PROPERTIES_FILE, e);
+        if (isStackEnabled()) {
+            url = AutomationTestStack.workloadBaseUrl();
+        } else {
+            url = property(WORKLOAD_BASE_URL, LOCAL_WORKLOAD_BASE_URL);
         }
+
+        return url;
     }
 
-    private void flatten(String prefix, Map<?, ?> node, Map<String, String> out) {
-        for (Map.Entry<?, ?> entry : node.entrySet()) {
-            String key = prefix.isEmpty() ? entry.getKey().toString() : prefix + "." + entry.getKey().toString();
-            Object value = entry.getValue();
+    public static String defaultUsername() {
+        return property(DEFAULT_USERNAME, LOCAL_USERNAME);
+    }
 
-            if (value instanceof Map<?, ?> nested) {
-                flatten(key, nested, out);
-            } else {
-                out.put(key, String.valueOf(value));
-            }
+    public static String defaultPassword() {
+        return property(DEFAULT_PASSWORD, LOCAL_PASSWORD);
+    }
+
+    private static String property(String name, String defaultValue) {
+        String value = System.getProperty(name);
+
+        if (value == null || value.isBlank()) {
+            return defaultValue;
         }
+
+        return value;
+    }
+
+    private static boolean isStackEnabled() {
+        return Boolean.parseBoolean(System.getProperty(STACK_ENABLED, "false"));
     }
 }

@@ -8,3 +8,12 @@ system:
       broker-url: tcp://localhost:61616
       user: gym
       password: gym
+
+spring:
+  activemq:
+    broker-url: vm://embedded?broker.persistent=false
+    user: gym
+    password: gym
+
+  jms:
+    pub-sub-domain: false

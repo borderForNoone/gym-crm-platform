@@ -1,5 +1,6 @@
 package com.gym.crm.core.security;
 
+import com.gym.crm.core.security.impl.RedisBruteForceProtectionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,7 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class BruteForceProtectionServiceTest {
+class RedisBruteForceProtectionServiceTest {
     private static final String USERNAME = "Simone.Radcliff";
     private static final String ATTEMPTS_KEY = "login:attempts:" + USERNAME;
     private static final String LOCK_KEY = "login:lock:" + USERNAME;
@@ -34,7 +35,7 @@ class BruteForceProtectionServiceTest {
     private ValueOperations<String, String> valueOperations;
 
     @InjectMocks
-    private BruteForceProtectionService service;
+    private RedisBruteForceProtectionService service;
 
     @Test
     void loginFailed_shouldIncrementAttempts() {

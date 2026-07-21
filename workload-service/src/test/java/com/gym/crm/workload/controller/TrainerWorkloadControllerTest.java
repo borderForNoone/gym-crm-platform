@@ -2,8 +2,8 @@ package com.gym.crm.workload.controller;
 
 import com.gym.crm.workload.config.NoSecurityConfig;
 import com.gym.crm.workload.security.JwtService;
-import com.gym.crm.workload.security.TokenBlacklistService;
-import com.gym.crm.workload.service.TrainerWorkloadService;
+import com.gym.crm.workload.security.imp.RedisTokenBlacklistService;
+import com.gym.crm.workload.service.impl.TrainerWorkloadServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -31,11 +31,11 @@ class TrainerWorkloadControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private TrainerWorkloadService trainerWorkloadService;
+    private TrainerWorkloadServiceImpl trainerWorkloadService;
     @MockitoBean
     private JwtService jwtService;
     @MockitoBean
-    private TokenBlacklistService tokenBlacklistService;
+    private RedisTokenBlacklistService redisTokenBlacklistService;
 
     @Test
     void getTrainerMonthlyWorkload_shouldReturnOk() throws Exception {
@@ -46,10 +46,8 @@ class TrainerWorkloadControllerTest {
                         .param("month", String.valueOf(MONTH)))
                 .andReturn();
 
-        int actualStatus = result.getResponse().getStatus();
-        String actualBody = result.getResponse().getContentAsString();
-        assertThat(actualStatus).isEqualTo(EXPECTED_HTTP_OK);
-        assertThat(actualBody).isEqualTo(String.valueOf(DURATION));
+        assertThat(result.getResponse().getStatus()).isEqualTo(EXPECTED_HTTP_OK);
+        assertThat(result.getResponse().getContentAsString()).isEqualTo(String.valueOf(DURATION));
         verify(trainerWorkloadService).getMonthlyWorkload(USERNAME, YEAR, MONTH);
     }
 }

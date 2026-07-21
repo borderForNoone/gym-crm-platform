@@ -1,5 +1,6 @@
 package com.gym.crm.workload.security;
 
+import com.gym.crm.workload.security.imp.RedisTokenBlacklistService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,7 +30,7 @@ class TokenBlacklistServiceTest {
     private StringRedisTemplate redisTemplate;
 
     @InjectMocks
-    private TokenBlacklistService service;
+    private RedisTokenBlacklistService service;
 
     @Test
     void isBlacklisted_shouldReturnTrue_WhenKeyExistsInRedis() {
@@ -60,8 +61,8 @@ class TokenBlacklistServiceTest {
 
             assertThatThrownBy(() -> service.isBlacklisted(TOKEN))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessage("Hashing is not available")
-                    .hasCause(cause);
+                    .hasCause(cause)
+                    .hasMessageContaining("SHA-256 is missing");
             verify(redisTemplate, never()).hasKey(anyString());
         }
     }

@@ -32,7 +32,7 @@ public class WorkloadEventPublisher {
             jmsTemplate.convertAndSend(destination, request, message -> withTransactionId(message, transactionId));
             log.info("Workload event published for trainer={} action={} txId={}", request.getTrainerUsername(), request.getActionType(), transactionId);
         } catch (JmsException exception) {
-            log.error("Failed to publish workload event for trainer={} action={} txId={} message={}", request.getTrainerUsername(), request.getActionType(), transactionId, exception.getMessage());
+            log.error("Failed to publish workload event for trainer={} action={} txId={}", request.getTrainerUsername(), request.getActionType(), transactionId, exception);
             throw exception;
         }
     }

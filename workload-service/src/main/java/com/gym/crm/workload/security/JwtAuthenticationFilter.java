@@ -50,7 +50,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private boolean shouldAuthenticate(String token) {
         boolean notAuthenticated = SecurityContextHolder.getContext().getAuthentication() == null;
-
         boolean valid = jwtService.isTokenValid(token);
         boolean blacklisted = blacklistService.isBlacklisted(token);
 
