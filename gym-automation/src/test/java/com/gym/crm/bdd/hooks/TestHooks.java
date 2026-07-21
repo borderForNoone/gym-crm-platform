@@ -22,8 +22,6 @@ public class TestHooks {
     }
 
     private static boolean isStackEnabled() {
-        return Boolean.parseBoolean(
-                System.getProperty(STACK_ENABLED, "false")
-        );
+        return Boolean.parseBoolean(System.getProperty(STACK_ENABLED, "false"));
     }
 }

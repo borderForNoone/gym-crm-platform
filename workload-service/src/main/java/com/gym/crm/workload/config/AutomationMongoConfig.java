@@ -18,8 +18,7 @@ public class AutomationMongoConfig {
     @Bean(destroyMethod = "close")
     public TransitionWalker.ReachedState<RunningMongodProcess> embeddedMongo() {
         Mongod mongod = Mongod.builder()
-                .net(Start.to(Net.class).initializedWith(
-                        Net.defaults().withPort(EMBEDDED_MONGO_PORT)))
+                .net(Start.to(Net.class).initializedWith(Net.defaults().withPort(EMBEDDED_MONGO_PORT)))
                 .build();
         return mongod.start(Version.Main.V7_0);
     }
