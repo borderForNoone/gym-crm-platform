@@ -15,6 +15,13 @@ at them.
 * Their usual dependencies (MySQL, MongoDB, Redis, ActiveMQ) up, exactly as when you run these
   services for local development — see the root `README.md`.
 
+If you don't already have Redis running locally, start it with Docker before running the services
+or the BDD tests:
+
+```bash
+docker run -d --name redis -p 6379:6379 redis:7
+```
+
 Start both services the same way you always do (IDE Run configuration, or
 `mvn spring-boot:run -pl gym-core-service` / `-pl workload-service`) and wait until you see
 `Started GymApplication` / `Started WorkloadService` in their logs before running these tests.

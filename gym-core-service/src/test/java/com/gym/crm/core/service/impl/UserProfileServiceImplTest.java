@@ -10,9 +10,9 @@ import com.gym.crm.core.model.Trainer;
 import com.gym.crm.core.model.User;
 import com.gym.crm.core.repository.TraineeRepository;
 import com.gym.crm.core.repository.TrainerRepository;
-import com.gym.crm.core.security.impl.RedisBruteForceProtectionService;
 import com.gym.crm.core.security.JwtService;
 import com.gym.crm.core.security.TokenBlacklistService;
+import com.gym.crm.core.security.BruteForceProtectionService;
 import com.gym.crm.core.service.common.CoreValidator;
 import com.gym.crm.core.service.common.UserInputValidator;
 import org.gym.crm.rest.LoginRequest;
@@ -51,7 +51,7 @@ class UserProfileServiceImplTest {
     @Mock
     private JwtService jwtService;
     @Mock
-    private RedisBruteForceProtectionService redisBruteForceProtectionService;
+    private BruteForceProtectionService bruteForceProtectionService;
     @Mock
     private TokenBlacklistService tokenBlacklistService;
 
@@ -277,7 +277,7 @@ class UserProfileServiceImplTest {
 
         service.authenticate("user", "pass");
 
-        verify(redisBruteForceProtectionService).checkIfLocked("user");
+        verify(bruteForceProtectionService).checkIfLocked("user");
     }
 
     @Test
@@ -291,6 +291,6 @@ class UserProfileServiceImplTest {
 
         service.authenticate("user", "pass");
 
-        verify(redisBruteForceProtectionService).loginSuccess("user");
+        verify(bruteForceProtectionService).loginSuccess("user");
     }
 }

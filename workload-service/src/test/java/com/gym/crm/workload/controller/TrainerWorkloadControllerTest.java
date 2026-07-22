@@ -3,7 +3,7 @@ package com.gym.crm.workload.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gym.crm.workload.config.NoSecurityConfig;
 import com.gym.crm.workload.security.JwtService;
-import com.gym.crm.workload.security.imp.RedisTokenBlacklistService;
+import com.gym.crm.workload.security.TokenBlacklistService;
 import com.gym.crm.workload.service.impl.TrainerWorkloadServiceImpl;
 import gym.crm.platform.workload.openapi.ActionType;
 import gym.crm.platform.workload.openapi.TrainerWorkloadRequest;
@@ -46,7 +46,7 @@ class TrainerWorkloadControllerTest {
     @MockitoBean
     private JwtService jwtService;
     @MockitoBean
-    private RedisTokenBlacklistService redisTokenBlacklistService;
+    private TokenBlacklistService tokenBlacklistService;
 
     @Test
     void updateTrainerWorkload_shouldReturnOk() throws Exception {

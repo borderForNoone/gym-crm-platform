@@ -1,7 +1,5 @@
-package com.gym.crm.workload.security.impl;
+package com.gym.crm.workload.security;
 
-import com.gym.crm.workload.security.JwtService;
-import com.gym.crm.workload.security.imp.RedisTokenBlacklistService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,7 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class RedisTokenBlacklistServiceTest {
+class TokenBlacklistServiceTest {
     private static final String TOKEN = "jwt-token";
     private static final String HASHED_TOKEN = "637dca1ed85901f74d2634ec978c3e441598b7cc2f86a2b9a004662222009808";
     private static final String BLACKLIST_KEY = "blacklist:" + HASHED_TOKEN;
@@ -39,7 +37,7 @@ class RedisTokenBlacklistServiceTest {
     @Mock
     private ValueOperations<String, String> valueOperations;
     @InjectMocks
-    private RedisTokenBlacklistService service;
+    private TokenBlacklistService service;
 
     @Test
     void isBlacklisted_shouldReturnTrue_WhenKeyExistsInRedis() {

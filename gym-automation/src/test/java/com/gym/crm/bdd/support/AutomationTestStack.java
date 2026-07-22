@@ -230,7 +230,7 @@ public final class AutomationTestStack {
 
     private static GenericContainer<?> createGatewayContainer() {
         return applicationContainer(GATEWAY_IMAGE, GATEWAY_PORT, "api-gateway")
-                .withEnv(Map.of("SPRING_PROFILES_ACTIVE", "local",
+                .withEnv(Map.of("SPRING_PROFILES_ACTIVE", "automation",
                         "API_GATEWAY_PORT", String.valueOf(GATEWAY_PORT),
                         "EUREKA_SERVER_URL", eurekaUrl()))
                 .waitingFor(Wait.forListeningPort().withStartupTimeout(STARTUP_TIMEOUT));
@@ -244,7 +244,7 @@ public final class AutomationTestStack {
     }
 
     private static Map<String, String> commonServiceEnvironment() {
-        return Map.of("SPRING_PROFILES_ACTIVE", "local",
+        return Map.of("SPRING_PROFILES_ACTIVE", "automation",
                 "EUREKA_SERVER_URL", eurekaUrl(),
                 "JWT_SECRET", JWT_SECRET,
                 "REDIS_HOST", REDIS_ALIAS,

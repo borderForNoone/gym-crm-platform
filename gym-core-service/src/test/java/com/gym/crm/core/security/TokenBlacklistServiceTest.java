@@ -1,6 +1,5 @@
 package com.gym.crm.core.security;
 
-import com.gym.crm.core.security.impl.RedisTokenBlacklistService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -33,7 +32,7 @@ class TokenBlacklistServiceTest {
     private JwtService jwtService;
 
     @InjectMocks
-    private RedisTokenBlacklistService tokenBlacklistService;
+    private TokenBlacklistService tokenBlacklistService;
 
     @Test
     void isBlacklisted_shouldReturnFalse_whenTokenNotBlacklisted() {
