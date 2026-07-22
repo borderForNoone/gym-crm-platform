@@ -72,6 +72,12 @@
             <artifactId>activemq-broker</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.github.codemonstur</groupId>
+            <artifactId>embedded-redis</artifactId>
+            <version>1.4.3</version>
+            <scope>runtime</scope>
+        </dependency>
 
         <!-- JWT -->
         <dependency>

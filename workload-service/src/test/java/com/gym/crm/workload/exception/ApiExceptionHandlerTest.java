@@ -5,10 +5,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 class ApiExceptionHandlerTest {
     private ApiExceptionHandler handler;
@@ -54,5 +57,30 @@ class ApiExceptionHandlerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getErrorMessage()).isEqualTo(message);
         assertThat(response.getBody().getErrorCode()).isEqualTo(HttpStatus.NOT_FOUND.value());
+    }
+
+    @Test
+    void shouldReturn400WhenMethodArgumentNotValidExceptionThrown() {
+        MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
+
+        ResponseEntity<ErrorResponse> response = handler.handleValidation(exception);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getErrorCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(response.getBody().getErrorMessage()).isEqualTo("Validation error");
+    }
+
+
+    @Test
+    void shouldReturn400WhenHandlerMethodValidationExceptionThrown() {
+        HandlerMethodValidationException exception = mock(HandlerMethodValidationException.class);
+
+        ResponseEntity<ErrorResponse> response = handler.handleValidation(exception);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getErrorCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+        assertThat(response.getBody().getErrorMessage()).isEqualTo("Validation error");
     }
 }

@@ -114,10 +114,7 @@ public class UserProfileServiceImpl implements UserProfileService {
         String token = jwtService.generateToken(username);
         log.info("User authenticated successfully: {}", username);
 
-        return AuthResponseDTO.builder()
-                .username(username)
-                .token(token)
-                .build();
+        return AuthResponseDTO.builder().username(username).token(token).build();
     }
 
     @Transactional

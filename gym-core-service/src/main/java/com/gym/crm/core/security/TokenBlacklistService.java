@@ -26,10 +26,7 @@ public class TokenBlacklistService {
         }
 
         String tokenHash = hashToken(token);
-        template.opsForValue().set("blacklist:" + tokenHash,
-                "true",
-                remainingTime,
-                TimeUnit.MILLISECONDS);
+        template.opsForValue().set("blacklist:" + tokenHash, "true", remainingTime, TimeUnit.MILLISECONDS);
     }
 
     private String hashToken(String token) {

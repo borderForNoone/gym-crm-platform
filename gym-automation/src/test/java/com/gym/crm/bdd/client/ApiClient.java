@@ -24,6 +24,12 @@ public class ApiClient {
                 .post(baseUrl + path);
     }
 
+    public Response put(String path, String token, Object body) {
+        return request(token)
+                .body(body)
+                .put(baseUrl + path);
+    }
+
     public Response delete(String path, String token) {
         return request(token)
                 .delete(baseUrl + path);
