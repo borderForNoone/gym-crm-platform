@@ -21,7 +21,7 @@
         <cucumber.version>7.18.1</cucumber.version>
         <rest-assured.version>5.5.0</rest-assured.version>
         <awaitility.version>4.2.2</awaitility.version>
-        <skipSystemTests>true</skipSystemTests>
+        <skipBddTests>true</skipBddTests>
         <core.base.url>http://localhost:8080/gym-crm-application/api/v1</core.base.url>
         <workload.base.url>http://localhost:8080/workload-service/api/v1</workload.base.url>
         <default.username>billy.herrington</default.username>
@@ -117,7 +117,7 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <skipTests>${skipSystemTests}</skipTests>
+                    <skipTests>${skipBddTests}</skipTests>
                     <includes>
                         <include>**/*CucumberRunner.java</include>
                     </includes>

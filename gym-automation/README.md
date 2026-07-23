@@ -3,7 +3,7 @@
 Component and integration BDD tests (Cucumber) for `gym-core-service` and `workload-service`.
 
 Scenarios talk to both services purely over their public REST/JMS contracts, exactly like any
-other real caller. There is **no Docker, no Testcontainers, and no in-process bootstrapping** —
+other real caller. There is **no in-process bootstrapping** —
 this module assumes the services you want to test are **already running** somewhere reachable
 (your local machine, a docker-compose stack, a CI environment), and simply points HTTP requests
 at them.

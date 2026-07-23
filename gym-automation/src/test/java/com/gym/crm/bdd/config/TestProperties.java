@@ -13,8 +13,8 @@ public final class TestProperties {
     private static final String DEFAULT_PASSWORD = "system.tests.default-password";
     private static final String LOCAL_CORE_BASE_URL = "http://localhost:8080/api/v1";
     private static final String LOCAL_WORKLOAD_BASE_URL = "http://localhost:8082/workload-service/api/v1";
-    private static final String LOCAL_USERNAME = "billy.herrington";
-    private static final String LOCAL_PASSWORD = "password";
+    private static final String LOCAL_USERNAME = "gymautomation";
+    private static final String LOCAL_PASSWORD = "gymautomation";
 
     public static String coreBaseUrl() {
         if (isStackEnabled()) {
