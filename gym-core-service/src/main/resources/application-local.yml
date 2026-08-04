@@ -8,6 +8,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        type:
+          preferred_boolean_jdbc_type: TINYINT
   activemq:
     broker-url: tcp://localhost:61616
     user: gym

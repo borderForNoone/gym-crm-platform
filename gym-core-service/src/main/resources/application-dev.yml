@@ -9,6 +9,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        type:
+          preferred_boolean_jdbc_type: TINYINT
 
 springdoc:
   swagger-ui:
