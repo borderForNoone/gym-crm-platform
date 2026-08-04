@@ -1,0 +1,142 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: gym-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "${MYSQL_PORT}:3306"
+    networks:
+      - gym-network
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: gym-redis
+    ports:
+      - "${REDIS_PORT}:6379"
+    networks:
+      - gym-network
+
+  mongodb:
+    image: mongo:7.0.12
+    container_name: gym-mongodb
+    ports:
+      - "${MONGODB_PORT}:27017"
+    networks:
+      - gym-network
+
+  activemq:
+    image: apache/activemq-classic:5.18.6
+    container_name: gym-activemq
+    ports:
+      - "${ACTIVEMQ_PORT}:61616"
+      - "${ACTIVEMQ_WEB_PORT}:8161"
+    networks:
+      - gym-network
+
+  discovery-server:
+    build:
+      context: .
+      dockerfile: discovery-server/Dockerfile
+    image: discovery-server:local
+    container_name: discovery-server
+    environment:
+      DISCOVERY_SERVER_PORT: 8761
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: false
+      EUREKA_CLIENT_FETCH_REGISTRY: false
+      EUREKA_SERVER_URL: http://${DISCOVERY_HOST:-discovery-server}:8761/eureka/
+    ports:
+      - "${DISCOVERY_SERVER_PORT}:8761"
+    networks:
+      - gym-network
+
+  workload-service:
+    build:
+      context: .
+      dockerfile: workload-service/Dockerfile
+    image: workload-service:local
+    container_name: workload-service
+    depends_on:
+      - discovery-server
+      - redis
+      - mongodb
+      - activemq
+    environment:
+      SERVER_PORT: 8082
+      # Workaround: workload-service/pom.xml declares de.flapdoodle.embed.mongo.spring3x
+      # without <scope>test</scope>, so it ends up on the runtime classpath and
+      # EmbeddedMongoAutoConfiguration tries to start an embedded Mongo instead of
+      # connecting to the real `mongodb` container. Proper fix is adding
+      # <scope>test</scope> to that dependency; this exclusion is a stopgap.
+      SPRING_AUTOCONFIGURE_EXCLUDE: de.flapdoodle.embed.mongo.spring.autoconfigure.EmbeddedMongoAutoConfiguration
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST:-redis}
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_MONGODB_URI: mongodb://${MONGODB_HOST:-mongodb}:27017/${MONGODB_DATABASE}
+      ACTIVEMQ_BROKER_URL: tcp://${ACTIVEMQ_HOST:-activemq}:61616
+      ACTIVEMQ_USER: ${ACTIVEMQ_USER}
+      ACTIVEMQ_PASSWORD: ${ACTIVEMQ_PASSWORD}
+      EUREKA_SERVER_URL: http://${DISCOVERY_HOST:-discovery-server}:8761/eureka/
+      JWT_SECRET: ${JWT_SECRET}
+      WORKLOAD_MESSAGING_CONSUMER_CONCURRENCY: ${WORKLOAD_MESSAGING_CONSUMER_CONCURRENCY}
+    ports:
+      - "${WORKLOAD_SERVICE_PORT}:8082"
+    networks:
+      - gym-network
+
+  gym-core-service:
+    build:
+      context: .
+      dockerfile: gym-core-service/Dockerfile
+    image: gym-core-service:local
+    container_name: gym-core-service
+    depends_on:
+      - discovery-server
+      - mysql
+      - redis
+      - activemq
+      - workload-service
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: 8080
+      DB_URL: jdbc:mysql://${MYSQL_HOST:-mysql}:3306/${MYSQL_DATABASE}
+      DB_USERNAME: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST:-redis}
+      SPRING_DATA_REDIS_PORT: 6379
+      ACTIVEMQ_BROKER_URL: tcp://${ACTIVEMQ_HOST:-activemq}:61616
+      ACTIVEMQ_USER: ${ACTIVEMQ_USER}
+      ACTIVEMQ_PASSWORD: ${ACTIVEMQ_PASSWORD}
+      EUREKA_SERVER_URL: http://${DISCOVERY_HOST:-discovery-server}:8761/eureka/
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      WORKLOAD_SERVICE_URL: http://${WORKLOAD_HOST:-workload-service}:8082/workload-service/api/v1
+    ports:
+      - "${GYM_CORE_SERVICE_PORT}:8080"
+    networks:
+      - gym-network
+
+  gateway-service:
+    build:
+      context: .
+      dockerfile: gateway-service/Dockerfile
+    image: gateway-service:local
+    container_name: gateway-service
+    depends_on:
+      - discovery-server
+      - gym-core-service
+      - workload-service
+    environment:
+      API_GATEWAY_PORT: ${API_GATEWAY_PORT}
+      EUREKA_SERVER_URL: http://${DISCOVERY_HOST:-discovery-server}:8761/eureka/
+    ports:
+      - "${API_GATEWAY_PORT}:8080"
+    networks:
+      - gym-network
+
+networks:
+  gym-network:
+    driver: bridge

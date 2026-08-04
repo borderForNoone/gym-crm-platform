@@ -4,6 +4,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+    properties:
+      hibernate:
+        type:
+          preferred_boolean_jdbc_type: TINYINT
   liquibase:
     change-log: classpath:db/migration/master.xml
     enabled: true
