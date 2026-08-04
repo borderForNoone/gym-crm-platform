@@ -5,6 +5,10 @@ spring:
     password: ${DB_PASSWORD}
   jpa:
     show-sql: false
+    properties:
+      hibernate:
+        type:
+          preferred_boolean_jdbc_type: TINYINT
 
 logging:
   level:

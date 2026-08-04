@@ -105,11 +105,11 @@
 
     <changeSet id="GIA-79-reset-auto-increment" author="denys">
         <sql>
-            ALTER TABLE users ALTER COLUMN id RESTART WITH 4;
-            ALTER TABLE trainees ALTER COLUMN id RESTART WITH 3;
-            ALTER TABLE trainers ALTER COLUMN id RESTART WITH 2;
-            ALTER TABLE training_types ALTER COLUMN id RESTART WITH 4;
-            ALTER TABLE trainings ALTER COLUMN id RESTART WITH 3;
+            ALTER TABLE users AUTO_INCREMENT = 4;
+            ALTER TABLE trainees AUTO_INCREMENT = 3;
+            ALTER TABLE trainers AUTO_INCREMENT = 2;
+            ALTER TABLE training_types AUTO_INCREMENT = 4;
+            ALTER TABLE trainings AUTO_INCREMENT = 3;
         </sql>
     </changeSet>
 </databaseChangeLog>
